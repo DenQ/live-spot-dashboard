@@ -1,0 +1,37 @@
+.root {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+.glow {
+  position: absolute;
+  inset: -24% 8% auto;
+  height: 48vh;
+  background:
+    radial-gradient(closest-side, rgba(255, 46, 230, 0.22), transparent 70%),
+    radial-gradient(closest-side at 80% 40%, rgba(61, 240, 255, 0.16), transparent 68%);
+  pointer-events: none;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 46, 230, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61, 240, 255, 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 72%);
+  pointer-events: none;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 24px 48px;
+}

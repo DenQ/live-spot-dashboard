@@ -1,0 +1,64 @@
+:root {
+  color-scheme: dark;
+
+  --font-sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", ui-monospace, monospace;
+
+  --bg-base: #07010f;
+  --bg-elevated: #12051c;
+  --bg-panel: rgba(18, 6, 32, 0.74);
+  --bg-panel-strong: rgba(22, 8, 38, 0.94);
+  --line: rgba(255, 46, 230, 0.22);
+  --line-strong: rgba(61, 240, 255, 0.45);
+
+  --text-primary: #f6eaff;
+  --text-muted: #b197c4;
+  --text-faint: #6d567c;
+
+  --accent: #ff2ee6;
+  --accent-2: #3df0ff;
+  --accent-dim: rgba(255, 46, 230, 0.14);
+  --danger: #ff4d6d;
+  --warn: #ffe14d;
+  --up: #3df0ff;
+  --down: #ff2ee6;
+
+  --shadow-panel: 0 24px 80px rgba(255, 46, 230, 0.08), 0 16px 40px rgba(0, 0, 0, 0.45);
+  --radius-lg: 20px;
+  --radius-md: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  color: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}

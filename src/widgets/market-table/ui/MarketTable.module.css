@@ -1,0 +1,80 @@
+.wrap {
+  padding: 16px 18px 20px;
+  overflow: auto;
+}
+
+.message {
+  margin: 24px 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 10px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--text-faint);
+  border-bottom: 1px solid var(--line);
+}
+
+.table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  cursor: pointer;
+}
+
+.table tbody tr:focus-visible {
+  outline: 1px solid var(--accent-2);
+  outline-offset: -1px;
+}
+
+.table tbody tr:hover {
+  background: rgba(61, 240, 255, 0.05);
+}
+
+.table tbody tr[data-selected] {
+  background: linear-gradient(90deg, rgba(255, 46, 230, 0.14), transparent 80%);
+}
+
+.ticker {
+  display: block;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.name {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.num[data-side="up"] {
+  color: var(--up);
+  text-shadow: 0 0 12px rgba(61, 240, 255, 0.35);
+}
+
+.num[data-side="down"] {
+  color: var(--down);
+  text-shadow: 0 0 12px rgba(255, 46, 230, 0.4);
+}

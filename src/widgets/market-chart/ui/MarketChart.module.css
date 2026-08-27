@@ -1,0 +1,22 @@
+.body {
+  position: relative;
+  padding: 8px 12px 16px;
+}
+
+.chart {
+  height: 360px;
+  width: 100%;
+}
+
+.message {
+  position: absolute;
+  inset: 8px 12px 16px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  background: rgba(7, 1, 15, 0.88);
+  color: var(--text-muted);
+}
