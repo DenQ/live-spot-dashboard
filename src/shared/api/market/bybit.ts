@@ -88,8 +88,18 @@ export function createBybitFeed(): MarketFeed {
       }))
     },
 
-    subscribeQuotes(onQuote) {
+    subscribeQuotes(onQuote, onRtt) {
       return openJsonWebSocket(WS, {
+        onRtt,
+        heartbeat: {
+          intervalMs: 15_000,
+          ping(socket) {
+            socket.send(JSON.stringify({ op: 'ping' }))
+          },
+          isPong(payload) {
+            return isRecord(payload) && (payload.op === 'pong' || payload.ret_msg === 'pong')
+          },
+        },
         onOpen(socket) {
           socket.send(
             JSON.stringify({

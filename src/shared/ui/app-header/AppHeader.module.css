@@ -49,9 +49,11 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  flex-shrink: 0;
   gap: 6px;
   font-family: var(--font-mono);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
 
@@ -59,6 +61,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-width: 12ch;
 }
 
 .live::before {
@@ -80,8 +83,10 @@
   box-shadow: 0 0 0 4px rgba(255, 77, 109, 0.2);
 }
 
-.session {
+.liveDetail {
+  min-width: 6ch;
   color: var(--text-faint);
+  text-align: right;
 }
 
 @media (max-width: 720px) {

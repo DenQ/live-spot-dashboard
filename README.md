@@ -15,10 +15,21 @@ Header switch: **Binance** / **Bybit**. Public REST + WebSocket, no API key.
 
 ## GitHub Pages
 
-Repo root is this folder. After the first push to `main`:
+Deploys from **CI** after a merge (or push) to `main`. There is no `npm run deploy`: a local build is not a release.
 
-1. GitHub → Settings → Pages → Deploy from branch **`gh-pages`**, folder `/` (root)
-2. Workflow `.github/workflows/deploy.yml` builds and publishes `dist/` to `gh-pages`
-3. App URL: `https://<user>.github.io/<repo>/`
+Pipeline (`.github/workflows/deploy.yml`):
 
-`vite` `base` is `/` locally and `/<repo>/` on CI (`GITHUB_PAGES=true`). SPA routes are covered by copying `index.html` → `404.html` after build.
+1. PR → `lint` + `build` (no publish)
+2. `main` → same, then official [deploy-pages](https://github.com/actions/deploy-pages)
+3. Manual rerun: Actions → **Pages** → **Run workflow** (on `main`)
+
+One-time repo settings — **without this the deploy job 404s**:
+
+1. Open https://github.com/DenQ/live-spot-dashboard/settings/pages
+2. **Build and deployment → Source: GitHub Actions** (not “Deploy from a branch” / `gh-pages`)
+3. Save, then re-run **Pages** on `main` (or push this workflow)
+4. Site: https://denq.github.io/live-spot-dashboard/
+
+A 404 from `actions/deploy-pages` (`Failed to create deployment`) means Pages is still off or still pointed at a branch. Node 20 deprecation came from `deploy-pages@v4`; the workflow now uses Node 24 actions (`deploy-pages@v5`).
+
+The old `gh-pages` branch can be deleted after Actions is the source. Vite `base` is `/` locally and `/live-spot-dashboard/` in CI. SPA fallback: `dist/404.html`.

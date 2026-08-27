@@ -114,12 +114,17 @@ export function createBinanceFeed(): MarketFeed {
       return payload.map((row) => toCandle(instrumentId, row))
     },
 
-    subscribeQuotes(onQuote) {
+    subscribeQuotes(onQuote, onRtt) {
       const streams = INSTRUMENTS.map((item) => `${item.id.toLowerCase()}@miniTicker`).join('/')
       return openJsonWebSocket(`${WS}?streams=${streams}`, {
         onMessage(payload) {
           if (!isMiniTicker(payload)) {
             return
+          }
+
+          const delay = Date.now() - payload.data.E
+          if (delay >= 0 && delay < 30_000) {
+            onRtt?.(delay)
           }
 
           const open = Number(payload.data.o)

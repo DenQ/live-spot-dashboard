@@ -5,9 +5,16 @@ import { MarketTable } from '@widgets/market-table'
 
 import styles from './DashboardPage.module.css'
 
+function formatLiveDetail(status: 'connecting' | 'live' | 'error', rttMs: number | null): string {
+  if (status === 'live' && rttMs !== null) {
+    return `${rttMs} ms`
+  }
+
+  return '—'
+}
+
 export function DashboardPage() {
-  const { quoteStatus, providers, providerId } = useMarketFeed()
-  const provider = providers.find((item) => item.id === providerId)
+  const { quoteStatus, quoteRttMs } = useMarketFeed()
   const liveTone = quoteStatus === 'live' ? 'live' : quoteStatus === 'error' ? 'error' : 'pending'
   const liveLabel = quoteStatus === 'error' ? 'Offline' : quoteStatus === 'live' ? 'Live' : 'Connecting'
 
@@ -17,7 +24,7 @@ export function DashboardPage() {
         action={<ProviderSwitch />}
         liveTone={liveTone}
         liveLabel={liveLabel}
-        sessionLabel={provider?.label ?? 'Spot'}
+        liveDetail={formatLiveDetail(quoteStatus, quoteRttMs)}
       />
       <div className={styles.layout}>
         <MarketChart />

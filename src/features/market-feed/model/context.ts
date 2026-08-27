@@ -20,6 +20,7 @@ export type MarketFeedContextValue = {
   candleStatus: FeedStatus
   quoteError: string | null
   candleError: string | null
+  quoteRttMs: number | null
 }
 
 export const MarketFeedContext = createContext<MarketFeedContextValue | null>(null)

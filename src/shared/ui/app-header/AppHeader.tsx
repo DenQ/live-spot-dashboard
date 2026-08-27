@@ -10,14 +10,14 @@ type AppHeaderProps = {
   action?: ReactNode
   liveLabel?: string
   liveTone?: LiveTone
-  sessionLabel?: string
+  liveDetail?: string
 }
 
 export function AppHeader({
   action,
   liveLabel = 'Idle',
   liveTone = 'pending',
-  sessionLabel = 'REST · WebSocket',
+  liveDetail = '—',
 }: AppHeaderProps) {
   return (
     <header className={styles.root}>
@@ -34,7 +34,7 @@ export function AppHeader({
           <span className={styles.live} data-tone={liveTone}>
             {liveLabel}
           </span>
-          <span className={styles.session}>{sessionLabel}</span>
+          <span className={styles.liveDetail}>{liveDetail}</span>
         </div>
       </div>
     </header>

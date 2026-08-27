@@ -21,8 +21,15 @@
   text-align: left;
 }
 
-.tab:hover {
+.tab:hover:not(:disabled) {
   background: var(--accent-dim);
+}
+
+.tab:disabled {
+  cursor: default;
+  opacity: 1;
+  color: inherit;
+  -webkit-text-fill-color: inherit;
 }
 
 .tab:focus-visible {

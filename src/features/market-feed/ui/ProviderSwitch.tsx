@@ -17,6 +17,7 @@ export function ProviderSwitch() {
             type="button"
             role="tab"
             aria-selected={selected}
+            disabled={selected}
             className={cx(styles.tab, selected && styles.selected)}
             onClick={() => setProviderId(provider.id)}
           >
