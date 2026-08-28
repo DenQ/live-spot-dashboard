@@ -8,27 +8,34 @@ type LiveTone = 'live' | 'pending' | 'error'
 
 type AppHeaderProps = {
   action?: ReactNode
+  kicker?: string
+  liveDetail?: string
   liveLabel?: string
   liveTone?: LiveTone
-  liveDetail?: string
+  nav?: ReactNode
+  title?: string
 }
 
 export function AppHeader({
   action,
+  kicker = APP_KICKER,
+  liveDetail = '—',
   liveLabel = 'Idle',
   liveTone = 'pending',
-  liveDetail = '—',
+  nav,
+  title = APP_NAME,
 }: AppHeaderProps) {
   return (
     <header className={styles.root}>
       <div className={styles.brand}>
         <span className={styles.mark} aria-hidden />
         <div>
-          <p className={styles.kicker}>{APP_KICKER}</p>
-          <h1 className={styles.title}>{APP_NAME}</h1>
+          <p className={styles.kicker}>{kicker}</p>
+          <h1 className={styles.title}>{title}</h1>
         </div>
       </div>
       <div className={styles.aside}>
+        {nav}
         {action}
         <div className={styles.meta}>
           <span className={styles.live} data-tone={liveTone}>

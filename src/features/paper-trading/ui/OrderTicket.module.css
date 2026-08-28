@@ -1,0 +1,182 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 22px 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(8, 0, 16, 0.55);
+  color: var(--text-primary);
+  font-size: 16px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.control input {
+  padding-right: 42px;
+}
+
+.control input:read-only {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.mode {
+  position: absolute;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.mode:hover {
+  background: var(--accent-dim);
+}
+
+.mode[data-mode="auto"] {
+  color: var(--accent-2);
+}
+
+.mode[data-mode="manual"] {
+  color: var(--accent);
+}
+
+.mode:focus-visible {
+  outline: 1px solid var(--accent-2);
+  outline-offset: 1px;
+}
+
+.field input:focus {
+  outline: 1px solid var(--accent-2);
+  outline-offset: 1px;
+}
+
+.ghost,
+.meta {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.ghost {
+  cursor: pointer;
+}
+
+.ghost:hover {
+  color: var(--accent-2);
+}
+
+.notional,
+.note,
+.error {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.error {
+  color: var(--danger);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.buy,
+.sell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 48px;
+  padding: 12px 10px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.actionHint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.gain {
+  color: #fff;
+}
+
+.loss {
+  color: var(--text-faint);
+}
+
+.buy {
+  background: rgba(61, 240, 255, 0.18);
+  box-shadow: 0 0 18px rgba(61, 240, 255, 0.16);
+}
+
+.sell {
+  background: rgba(255, 46, 230, 0.2);
+  box-shadow: 0 0 18px rgba(255, 46, 230, 0.18);
+}
+
+.buy:hover,
+.sell:hover {
+  filter: brightness(1.12);
+}
+
+.buy:disabled,
+.sell:disabled {
+  cursor: default;
+  opacity: 0.4;
+  filter: none;
+}
+
+.buy:focus-visible,
+.sell:focus-visible {
+  outline: 1px solid var(--accent-2);
+  outline-offset: 2px;
+}

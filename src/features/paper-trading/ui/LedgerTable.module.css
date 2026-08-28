@@ -1,0 +1,68 @@
+.wrap {
+  padding: 12px 18px 18px;
+  overflow: auto;
+  max-height: 320px;
+}
+
+.empty {
+  margin: 18px 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 10px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--text-faint);
+  border-bottom: 1px solid var(--line);
+}
+
+.table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+.table td[data-side="buy"] {
+  color: var(--up);
+  text-transform: uppercase;
+}
+
+.table td[data-side="sell"] {
+  color: var(--down);
+  text-transform: uppercase;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: capitalize;
+  color: var(--text-muted);
+}
+
+.status[data-status="filled"] {
+  color: var(--up);
+}
+
+.status[data-status="rejected"],
+.status[data-status="expired"] {
+  color: var(--danger);
+}

@@ -33,3 +33,42 @@ export function formatVolume(value: number): string {
     maximumFractionDigits: 2,
   }).format(value)
 }
+
+export function formatUsd(value: number): string {
+  if (!Number.isFinite(value)) {
+    return '—'
+  }
+
+  return value.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
+export function formatSignedCompactUsd(value: number): string {
+  if (!Number.isFinite(value)) {
+    return '—'
+  }
+
+  return value.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    notation: 'compact',
+    maximumFractionDigits: 1,
+    signDisplay: 'always',
+  })
+}
+
+export function formatQty(value: number): string {
+  if (!Number.isFinite(value)) {
+    return '—'
+  }
+
+  if (Math.abs(value) >= 1) {
+    return value.toLocaleString('en-US', { maximumFractionDigits: 6 })
+  }
+
+  return value.toLocaleString('en-US', { maximumFractionDigits: 8 })
+}
