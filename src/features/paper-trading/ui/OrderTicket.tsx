@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 
 import type { PaperSide } from '@entities/paper-account'
-import { useMarketFeed } from '@features/market-feed'
+import { useMarketFeed, useQuotes } from '@features/market-feed'
 import { PAPER } from '@shared/config'
 import { cx, formatPrice, formatQty, formatSignedCompactUsd, formatUsd } from '@shared/lib'
 import { Panel } from '@shared/ui'
@@ -19,7 +19,8 @@ export function OrderTicket() {
 }
 
 function OrderTicketFields({ initialQty }: { initialQty: string }) {
-  const { instruments, quotesById, symbol, quoteStatus } = useMarketFeed()
+  const { instruments, symbol, quoteStatus } = useMarketFeed()
+  const quotesById = useQuotes()
   const { submit, freeQty, account } = usePaperTrading()
   const instrument = instruments.find((item) => item.id === symbol)
   const last = quotesById[symbol]?.last

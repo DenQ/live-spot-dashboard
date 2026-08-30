@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 
 import type { PaperSide } from '@entities/paper-account'
-import { useMarketFeed } from '@features/market-feed'
+import { lastPrices } from '@entities/quote'
+import { getLiveQuotes, useQuotes } from '@features/market-feed'
 
 import { PaperTradingContext, type TicketPrefill } from './context'
 import {
   cancelOrder,
   createAccount,
   freeQty as freeQtyOf,
+  hasWorkingOrders,
   markToMarket,
   matchWorking,
   openOrders,
@@ -32,24 +34,13 @@ function toQtyInput(qty: number): string {
 }
 
 export function PaperTradingProvider({ children }: { children: ReactNode }) {
-  const { quotesById } = useMarketFeed()
+  const quotesById = useQuotes()
   const [account, setAccount] = useState(readStoredAccount)
   const [ticketPrefill, setTicketPrefill] = useState<TicketPrefill | null>(null)
-  const quotesRef = useRef(quotesById)
 
-  useEffect(() => {
-    quotesRef.current = quotesById
-  }, [quotesById])
-
-  const lastById = useMemo(() => {
-    const next: Record<string, number> = {}
-    for (const [id, quote] of Object.entries(quotesById)) {
-      if (Number.isFinite(quote.last)) {
-        next[id] = quote.last
-      }
-    }
-    return next
-  }, [quotesById])
+  const lastById = useMemo(() => lastPrices(quotesById), [quotesById])
+  const working = useMemo(() => openOrders(account), [account])
+  const matching = useMemo(() => hasWorkingOrders(account), [account])
 
   useEffect(() => {
     persistAccount(account)
@@ -96,7 +87,7 @@ export function PaperTradingProvider({ children }: { children: ReactNode }) {
       return window.setTimeout(() => {
         const makeRng = replayableRng([Math.random(), Math.random(), Math.random()])
         setAccount((current) => {
-          const last = quotesRef.current[order.instrumentId]?.last ?? null
+          const last = getLiveQuotes()[order.instrumentId]?.last ?? null
           return resolvePending(current, order.id, last, Date.now(), makeRng())
         })
       }, wait)
@@ -110,25 +101,21 @@ export function PaperTradingProvider({ children }: { children: ReactNode }) {
   }, [account])
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      const lastById: Record<string, number> = {}
-      for (const [id, quote] of Object.entries(quotesRef.current)) {
-        if (Number.isFinite(quote.last)) {
-          lastById[id] = quote.last
-        }
-      }
+    if (!matching) {
+      return
+    }
 
+    const timer = window.setInterval(() => {
       const makeRng = replayableRng([Math.random(), Math.random(), Math.random()])
-      setAccount((current) => matchWorking(current, lastById, Date.now(), makeRng()))
+      setAccount((current) => matchWorking(current, lastPrices(getLiveQuotes()), Date.now(), makeRng()))
     }, 300)
 
     return () => {
       window.clearInterval(timer)
     }
-  }, [])
+  }, [matching])
 
   const stats = useMemo(() => markToMarket(account, lastById), [account, lastById])
-  const working = useMemo(() => openOrders(account), [account])
 
   const value = useMemo(
     () => ({

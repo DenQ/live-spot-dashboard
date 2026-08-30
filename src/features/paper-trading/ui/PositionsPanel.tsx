@@ -1,4 +1,4 @@
-import { useMarketFeed } from '@features/market-feed'
+import { useMarketFeed, useQuotes } from '@features/market-feed'
 import { formatPct, formatPrice, formatQty, formatUsd } from '@shared/lib'
 import { Panel } from '@shared/ui'
 
@@ -6,7 +6,8 @@ import { usePaperTrading } from '../model/use-paper-trading'
 import styles from './PositionsPanel.module.css'
 
 export function PositionsPanel() {
-  const { quotesById, instruments, setSymbol } = useMarketFeed()
+  const { instruments, setSymbol } = useMarketFeed()
+  const quotesById = useQuotes()
   const { account, freeQty, prefillTicket } = usePaperTrading()
   const rows = Object.values(account.positions)
 

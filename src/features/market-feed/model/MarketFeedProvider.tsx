@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
-import type { Candle } from '@entities/candle'
-import type { Quote } from '@entities/quote'
 import { createMarketFeed, type Unsubscribe } from '@shared/api'
 import { MARKET_PROVIDERS, MARKET_WATCHLISTS, type MarketProviderId } from '@shared/config'
 
-import { upsertCandle } from './candles'
+import { applyLiveCandle, replaceCandles, resetCandles } from './candles-store'
 import { MarketFeedContext, type FeedStatus } from './context'
-import { indexQuotes, mergeQuote } from './quotes'
+import { indexQuotes } from './quotes'
+import { applyQuote, replaceQuotes, resetQuotes } from './quotes-store'
 import { persistProvider, readStoredProvider } from './storage'
 
 function toErrorMessage(cause: unknown): string {
@@ -15,6 +14,7 @@ function toErrorMessage(cause: unknown): string {
 }
 
 const RTT_EMA = 0.3
+const RTT_FLUSH_MS = 1000
 
 function blendRtt(current: number | null, sample: number): number {
   if (current === null) {
@@ -27,13 +27,13 @@ function blendRtt(current: number | null, sample: number): number {
 export function MarketFeedProvider({ children }: { children: ReactNode }) {
   const [providerId, setProviderIdState] = useState<MarketProviderId>(readStoredProvider)
   const [symbol, setSymbolState] = useState(() => MARKET_WATCHLISTS[readStoredProvider()][0]?.id ?? '')
-  const [quotesById, setQuotesById] = useState<Record<string, Quote>>({})
-  const [candles, setCandles] = useState<Candle[]>([])
   const [quoteStatus, setQuoteStatus] = useState<FeedStatus>('connecting')
   const [candleStatus, setCandleStatus] = useState<FeedStatus>('connecting')
   const [quoteError, setQuoteError] = useState<string | null>(null)
   const [candleError, setCandleError] = useState<string | null>(null)
   const [quoteRttMs, setQuoteRttMs] = useState<number | null>(null)
+  const rttHold = useRef<number | null>(null)
+  const rttFlushedAt = useRef(0)
 
   const instruments = MARKET_WATCHLISTS[providerId]
   const feed = useMemo(() => createMarketFeed(providerId), [providerId])
@@ -43,10 +43,12 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    resetQuotes()
+    resetCandles()
+    rttHold.current = null
+    rttFlushedAt.current = 0
     setProviderIdState(id)
     setSymbolState(MARKET_WATCHLISTS[id][0]?.id ?? '')
-    setQuotesById({})
-    setCandles([])
     setQuoteStatus('connecting')
     setCandleStatus('connecting')
     setQuoteError(null)
@@ -56,8 +58,8 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
   }, [providerId])
 
   const setSymbol = useCallback((id: string) => {
+    resetCandles()
     setSymbolState(id)
-    setCandles([])
     setCandleStatus('connecting')
     setCandleError(null)
   }, [])
@@ -66,6 +68,18 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
     let cancelled = false
     let unsubscribe: Unsubscribe = () => undefined
 
+    const flushRtt = (sample: number) => {
+      rttHold.current = blendRtt(rttHold.current, sample)
+      const now = performance.now()
+      if (rttFlushedAt.current !== 0 && now - rttFlushedAt.current < RTT_FLUSH_MS) {
+        return
+      }
+
+      rttFlushedAt.current = now
+      const next = rttHold.current
+      setQuoteRttMs((current) => (current === next ? current : next))
+    }
+
     const run = async () => {
       try {
         const snapshot = await feed.fetchQuotes()
@@ -73,19 +87,13 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
           return
         }
 
-        setQuotesById(indexQuotes(snapshot))
+        replaceQuotes(indexQuotes(snapshot))
         setQuoteStatus('live')
         setQuoteError(null)
-        unsubscribe = feed.subscribeQuotes(
-          (quote) => {
-            setQuotesById((current) => mergeQuote(current, quote))
-          },
-          (sample) => {
-            setQuoteRttMs((current) => blendRtt(current, sample))
-          },
-        )
+        unsubscribe = feed.subscribeQuotes(applyQuote, flushRtt)
       } catch (cause) {
         if (!cancelled) {
+          resetQuotes()
           setQuoteStatus('error')
           setQuoteError(toErrorMessage(cause))
           setQuoteRttMs(null)
@@ -116,14 +124,13 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
           return
         }
 
-        setCandles(history)
+        replaceCandles(history)
         setCandleStatus('live')
         setCandleError(null)
-        unsubscribe = feed.subscribeCandles(symbol, (candle) => {
-          setCandles((current) => upsertCandle(current, candle))
-        })
+        unsubscribe = feed.subscribeCandles(symbol, applyLiveCandle)
       } catch (cause) {
         if (!cancelled) {
+          resetCandles()
           setCandleStatus('error')
           setCandleError(toErrorMessage(cause))
         }
@@ -144,8 +151,6 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
       setProviderId,
       providers: MARKET_PROVIDERS,
       instruments,
-      quotesById,
-      candles,
       symbol,
       setSymbol,
       quoteStatus,
@@ -157,13 +162,11 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
     [
       candleError,
       candleStatus,
-      candles,
       instruments,
       providerId,
       quoteError,
       quoteRttMs,
       quoteStatus,
-      quotesById,
       setProviderId,
       setSymbol,
       symbol,

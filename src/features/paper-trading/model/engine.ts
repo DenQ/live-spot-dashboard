@@ -43,6 +43,10 @@ export function openOrders(account: PaperAccount): PaperOrder[] {
   return account.orders.filter((order) => isOpenStatus(order.status))
 }
 
+export function hasWorkingOrders(account: PaperAccount): boolean {
+  return account.orders.some((order) => order.status === 'working')
+}
+
 export function reservedQty(account: PaperAccount, instrumentId: string): number {
   return openOrders(account)
     .filter((order) => order.instrumentId === instrumentId && order.side === 'sell')

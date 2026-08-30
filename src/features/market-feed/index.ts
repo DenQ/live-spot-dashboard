@@ -1,3 +1,6 @@
 export { MarketFeedProvider } from './model/MarketFeedProvider'
 export { useMarketFeed } from './model/use-market-feed'
+export { useQuotes } from './model/use-quotes'
+export { getLiveQuotes } from './model/quotes-store'
+export { getCandles, subscribeLiveCandle } from './model/candles-store'
 export { ProviderSwitch } from './ui/ProviderSwitch'
