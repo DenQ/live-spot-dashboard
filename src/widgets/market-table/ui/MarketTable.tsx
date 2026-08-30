@@ -1,11 +1,12 @@
-import { useMarketFeed } from '@features/market-feed'
+import { useMarketFeed, useQuotes } from '@features/market-feed'
 import { formatPct, formatPrice, formatVolume } from '@shared/lib'
 import { Panel } from '@shared/ui'
 
 import styles from './MarketTable.module.css'
 
 export function MarketTable() {
-  const { quotesById, instruments, symbol, setSymbol, quoteStatus, quoteError } = useMarketFeed()
+  const { instruments, symbol, setSymbol, quoteStatus, quoteError } = useMarketFeed()
+  const quotesById = useQuotes()
 
   return (
     <Panel title="Pairs" hint="Select to chart">

@@ -1,5 +1,6 @@
 export { APP_KICKER, APP_NAME, APP_STORAGE_KEYS } from './app'
 export { env } from './env'
+export { PAPER } from './paper'
 export {
   isMarketProviderId,
   MARKET_PROVIDER_IDS,

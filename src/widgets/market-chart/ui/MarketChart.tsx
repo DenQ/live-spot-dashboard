@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 import type { Candle } from '@entities/candle'
-import { useMarketFeed } from '@features/market-feed'
+import { getCandles, subscribeLiveCandle, useMarketFeed } from '@features/market-feed'
 import { Panel } from '@shared/ui'
 import {
   CandlestickSeries,
@@ -38,12 +38,11 @@ function toVolumePoint(item: Candle) {
 }
 
 export function MarketChart() {
-  const { candles, symbol, instruments, candleStatus, candleError, providerId } = useMarketFeed()
+  const { symbol, instruments, candleStatus, candleError, providerId } = useMarketFeed()
   const hostRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const candleRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null)
-  const seriesKey = useRef('')
 
   const instrument = instruments.find((item) => item.id === symbol)
   const hint = instrument ? `${instrument.ticker} · 1h` : '—'
@@ -100,7 +99,6 @@ export function MarketChart() {
     )
 
     chartRef.current = chart
-    seriesKey.current = ''
 
     return () => {
       chart.remove()
@@ -118,32 +116,35 @@ export function MarketChart() {
       return
     }
 
-    const key = `${providerId}:${symbol}`
-    const last = candles.at(-1)
-
-    if (seriesKey.current !== key || candles.length === 0 || !last) {
-      candleSeries.setData(candles.map(toCandlePoint))
-      volumeSeries.setData(candles.map(toVolumePoint))
-
-      if (candles.length > 0) {
-        chartRef.current?.timeScale().fitContent()
-        seriesKey.current = key
-      }
-
+    if (candleStatus === 'connecting') {
+      candleSeries.setData([])
+      volumeSeries.setData([])
       return
     }
 
-    candleSeries.update(toCandlePoint(last))
-    volumeSeries.update(toVolumePoint(last))
-  }, [candles, providerId, symbol])
+    if (candleStatus !== 'live') {
+      return
+    }
+
+    const history = getCandles()
+    candleSeries.setData(history.map(toCandlePoint))
+    volumeSeries.setData(history.map(toVolumePoint))
+
+    if (history.length > 0) {
+      chartRef.current?.timeScale().fitContent()
+    }
+
+    return subscribeLiveCandle((candle) => {
+      candleSeries.update(toCandlePoint(candle))
+      volumeSeries.update(toVolumePoint(candle))
+    })
+  }, [candleStatus, providerId, symbol])
 
   return (
     <Panel title="Chart" hint={hint}>
       <div className={styles.body}>
         {candleStatus === 'error' && candleError ? <p className={styles.message}>{candleError}</p> : null}
-        {candleStatus === 'connecting' && candles.length === 0 ? (
-          <p className={styles.message}>Loading…</p>
-        ) : null}
+        {candleStatus === 'connecting' ? <p className={styles.message}>Loading…</p> : null}
         <div ref={hostRef} className={styles.chart} />
       </div>
     </Panel>

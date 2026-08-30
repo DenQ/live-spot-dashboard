@@ -116,15 +116,19 @@ export function createBinanceFeed(): MarketFeed {
 
     subscribeQuotes(onQuote, onRtt) {
       const streams = INSTRUMENTS.map((item) => `${item.id.toLowerCase()}@miniTicker`).join('/')
+      let lastRttAt = 0
+
       return openJsonWebSocket(`${WS}?streams=${streams}`, {
         onMessage(payload) {
           if (!isMiniTicker(payload)) {
             return
           }
 
-          const delay = Date.now() - payload.data.E
-          if (delay >= 0 && delay < 30_000) {
-            onRtt?.(delay)
+          const now = Date.now()
+          const delay = now - payload.data.E
+          if (onRtt && delay >= 0 && delay < 30_000 && now - lastRttAt >= 1000) {
+            lastRttAt = now
+            onRtt(delay)
           }
 
           const open = Number(payload.data.o)
