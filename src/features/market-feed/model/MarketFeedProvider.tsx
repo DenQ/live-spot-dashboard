@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { createMarketFeed, type Unsubscribe } from '@shared/api'
 import { MARKET_PROVIDERS, MARKET_WATCHLISTS, type MarketProviderId } from '@shared/config'
 
-import { applyLiveCandle, replaceCandles, resetCandles } from './candles-store'
+import { applyLiveCandle, getCandles, replaceCandles, resetCandles } from './candles-store'
 import { MarketFeedContext, type FeedStatus } from './context'
 import { indexQuotes } from './quotes'
 import { applyQuote, replaceQuotes, resetQuotes } from './quotes-store'
@@ -58,11 +58,15 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
   }, [providerId])
 
   const setSymbol = useCallback((id: string) => {
+    if (id === symbol) {
+      return
+    }
+
     resetCandles()
     setSymbolState(id)
     setCandleStatus('connecting')
     setCandleError(null)
-  }, [])
+  }, [symbol])
 
   useEffect(() => {
     let cancelled = false
@@ -154,18 +158,28 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
     let unsubscribe: Unsubscribe = () => undefined
     let wasConnected = false
 
+    const restoreLiveFromCache = () => {
+      if (getCandles().length === 0) {
+        return
+      }
+
+      setCandleStatus('live')
+      setCandleError(null)
+    }
+
     const handleConnectionChange = (connected: boolean) => {
       if (cancelled) {
         return
       }
 
       if (!connected) {
-        setCandleStatus('connecting')
+        // Keep the last candles on screen. Pair changes already set `connecting`.
         return
       }
 
       if (!wasConnected) {
         wasConnected = true
+        restoreLiveFromCache()
         return
       }
 

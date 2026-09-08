@@ -117,8 +117,10 @@ export function MarketChart() {
     }
 
     if (candleStatus === 'connecting') {
-      candleSeries.setData([])
-      volumeSeries.setData([])
+      if (getCandles().length === 0) {
+        candleSeries.setData([])
+        volumeSeries.setData([])
+      }
       return
     }
 
@@ -142,10 +144,14 @@ export function MarketChart() {
 
   return (
     <Panel title="Chart" hint={hint}>
-      <div className={styles.body}>
+      <div className={styles.body} data-testid="market-chart" aria-busy={candleStatus === 'connecting'}>
         {candleStatus === 'error' && candleError ? <p className={styles.message}>{candleError}</p> : null}
-        {candleStatus === 'connecting' ? <p className={styles.message}>Loading…</p> : null}
-        <div ref={hostRef} className={styles.chart} />
+        {candleStatus === 'connecting' && getCandles().length === 0 ? (
+          <p className={styles.message} data-testid="chart-loading" role="status">
+            Loading…
+          </p>
+        ) : null}
+        <div ref={hostRef} className={styles.chart} data-testid="chart-canvas" />
       </div>
     </Panel>
   )
