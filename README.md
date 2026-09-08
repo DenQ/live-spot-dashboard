@@ -1,35 +1,52 @@
-# Markets
+# PAPER Trainer
 
-Spot demo: React, TypeScript, Vite, Feature-Sliced Design.
+Paper-trade live spot markets without an API key and without real money. Quotes and candles come from Binance and Bybit. Fills are simulated on your machine.
 
-## Scripts
+[![tests](https://img.shields.io/github/actions/workflow/status/DenQ/live-spot-dashboard/deploy.yml?branch=main&label=tests)](https://github.com/DenQ/live-spot-dashboard/actions/workflows/deploy.yml)
+[![pages](https://img.shields.io/github/actions/workflow/status/DenQ/live-spot-dashboard/deploy.yml?branch=main&label=pages)](https://github.com/DenQ/live-spot-dashboard/actions/workflows/deploy.yml)
+[![live demo](https://img.shields.io/badge/demo-GitHub%20Pages-1abc9c)](https://denq.github.io/live-spot-dashboard/)
+
+**[Live demo](https://denq.github.io/live-spot-dashboard/)** · [Guide (English)](docs/guide.md) · [Инструкция (русский)](docs/guide.ru.md)
+
+<p align="center">
+  <img src="docs/images/trainer.png" alt="PAPER Trainer: live candlestick chart, order ticket, watchlist, and portfolio" width="100%" />
+</p>
+
+## Why it exists
+
+A professional-looking trainer for rehearsing entries and exits on real prices. You get a live tape, a ticket that is not instant, and a portfolio you can reset. Nothing hits an exchange.
+
+## What you get
+
+- **Markets** and **Trainer** — watch the book, then place paper orders on the same live feed
+- **Binance Spot** and **Bybit Spot** — public REST + WebSocket, no credentials
+- **Live status** with latency (RTT) when the socket is healthy
+- **Candlestick chart** and a watchlist (BTC, ETH, SOL, BNB, XRP, DOGE)
+- **Order ticket** — quantity, limit, notional, 0.10% fee, cash and max sell
+- **Realistic matching** — delayed fills, slippage, and a chance the book misses you
+- **Account strip** — cash, equity, unrealized PnL, vs start, **Reset $1,000**
+- **Portfolio, open orders, ledger** — persisted in the browser
+
+## Quick start
 
 ```bash
-npm install
+npm ci
 npm run dev
-npm run build
-npm run preview
 ```
 
-Header switch: **Binance** / **Bybit**. Public REST + WebSocket, no API key.
+Open the URL Vite prints (usually `http://localhost:5173`). Use **Trainer** to trade.
 
-## GitHub Pages
+```bash
+npm test          # Vitest
+npm run test:e2e  # Playwright (install Chromium once: npx playwright install chromium)
+```
 
-Deploys from **CI** after a merge (or push) to `main`. There is no `npm run deploy`: a local build is not a release.
+Full setup, paper rules, and GitHub Pages: **[English guide](docs/guide.md)** · **[Русская инструкция](docs/guide.ru.md)**
 
-Pipeline (`.github/workflows/deploy.yml`):
+## Stack
 
-1. PR → `lint` + `build` (no publish)
-2. `main` → same, then official [deploy-pages](https://github.com/actions/deploy-pages)
-3. Manual rerun: Actions → **Pages** → **Run workflow** (on `main`)
+React 19, TypeScript, Vite, Feature-Sliced Design, [lightweight-charts](https://github.com/tradingview/lightweight-charts).
 
-One-time repo settings — **without this the deploy job 404s**:
+## Disclaimer
 
-1. Open https://github.com/DenQ/live-spot-dashboard/settings/pages
-2. **Build and deployment → Source: GitHub Actions** (not “Deploy from a branch” / `gh-pages`)
-3. Save, then re-run **Pages** on `main` (or push this workflow)
-4. Site: https://denq.github.io/live-spot-dashboard/
-
-A 404 from `actions/deploy-pages` (`Failed to create deployment`) means Pages is still off or still pointed at a branch. Node 20 deprecation came from `deploy-pages@v4`; the workflow now uses Node 24 actions (`deploy-pages@v5`).
-
-The old `gh-pages` branch can be deleted after Actions is the source. Vite `base` is `/` locally and `/live-spot-dashboard/` in CI. SPA fallback: `dist/404.html`.
+This is a local simulation. Starting cash is $1,000. Orders are not sent to an exchange. Price can move while an order is working; the simulated book may miss you. Not financial advice.
