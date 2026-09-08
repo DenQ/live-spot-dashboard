@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { createMarketFeed, type Unsubscribe } from '@shared/api'
 import { MARKET_PROVIDERS, MARKET_WATCHLISTS, type MarketProviderId } from '@shared/config'
 
-import { applyLiveCandle, replaceCandles, resetCandles } from './candles-store'
+import { applyLiveCandle, getCandles, replaceCandles, resetCandles } from './candles-store'
 import { MarketFeedContext, type FeedStatus } from './context'
 import { indexQuotes } from './quotes'
 import { applyQuote, replaceQuotes, resetQuotes } from './quotes-store'
@@ -58,15 +58,20 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
   }, [providerId])
 
   const setSymbol = useCallback((id: string) => {
+    if (id === symbol) {
+      return
+    }
+
     resetCandles()
     setSymbolState(id)
     setCandleStatus('connecting')
     setCandleError(null)
-  }, [])
+  }, [symbol])
 
   useEffect(() => {
     let cancelled = false
     let unsubscribe: Unsubscribe = () => undefined
+    let wasConnected = false
 
     const flushRtt = (sample: number) => {
       rttHold.current = blendRtt(rttHold.current, sample)
@@ -80,6 +85,41 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
       setQuoteRttMs((current) => (current === next ? current : next))
     }
 
+    const handleConnectionChange = (connected: boolean) => {
+      if (cancelled) {
+        return
+      }
+
+      if (!connected) {
+        setQuoteStatus('connecting')
+        return
+      }
+
+      if (!wasConnected) {
+        wasConnected = true
+        return
+      }
+
+      void (async () => {
+        try {
+          const snapshot = await feed.fetchQuotes()
+          if (cancelled) {
+            return
+          }
+
+          replaceQuotes(indexQuotes(snapshot))
+          setQuoteStatus('live')
+          setQuoteError(null)
+        } catch (cause) {
+          if (!cancelled) {
+            setQuoteStatus('error')
+            setQuoteError(toErrorMessage(cause))
+            setQuoteRttMs(null)
+          }
+        }
+      })()
+    }
+
     const run = async () => {
       try {
         const snapshot = await feed.fetchQuotes()
@@ -90,7 +130,7 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
         replaceQuotes(indexQuotes(snapshot))
         setQuoteStatus('live')
         setQuoteError(null)
-        unsubscribe = feed.subscribeQuotes(applyQuote, flushRtt)
+        unsubscribe = feed.subscribeQuotes(applyQuote, flushRtt, handleConnectionChange)
       } catch (cause) {
         if (!cancelled) {
           resetQuotes()
@@ -116,6 +156,51 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false
     let unsubscribe: Unsubscribe = () => undefined
+    let wasConnected = false
+
+    const restoreLiveFromCache = () => {
+      if (getCandles().length === 0) {
+        return
+      }
+
+      setCandleStatus('live')
+      setCandleError(null)
+    }
+
+    const handleConnectionChange = (connected: boolean) => {
+      if (cancelled) {
+        return
+      }
+
+      if (!connected) {
+        // Keep the last candles on screen. Pair changes already set `connecting`.
+        return
+      }
+
+      if (!wasConnected) {
+        wasConnected = true
+        restoreLiveFromCache()
+        return
+      }
+
+      void (async () => {
+        try {
+          const history = await feed.fetchCandles(symbol)
+          if (cancelled) {
+            return
+          }
+
+          replaceCandles(history)
+          setCandleStatus('live')
+          setCandleError(null)
+        } catch (cause) {
+          if (!cancelled) {
+            setCandleStatus('error')
+            setCandleError(toErrorMessage(cause))
+          }
+        }
+      })()
+    }
 
     const run = async () => {
       try {
@@ -127,7 +212,7 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
         replaceCandles(history)
         setCandleStatus('live')
         setCandleError(null)
-        unsubscribe = feed.subscribeCandles(symbol, applyLiveCandle)
+        unsubscribe = feed.subscribeCandles(symbol, applyLiveCandle, handleConnectionChange)
       } catch (cause) {
         if (!cancelled) {
           resetCandles()

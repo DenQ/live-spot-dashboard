@@ -1,7 +1,7 @@
 import type { Quote } from '@entities/quote'
 import { requestJson } from '@shared/api/request'
-import { openJsonWebSocket } from '@shared/api/websocket'
-import { MARKET_WATCHLISTS } from '@shared/config'
+import { openJsonWebSocket, type WsConnectionState } from '@shared/api/websocket'
+import { MARKET_WATCHLISTS, BYBIT_WS } from '@shared/config'
 import { isRecord } from '@shared/lib'
 
 import type { MarketFeed } from './port'
@@ -29,6 +29,20 @@ type BybitWsFrame = {
   op?: string
   topic?: string
   data?: unknown
+}
+
+function mapConnectionChange(onConnectionChange?: (connected: boolean) => void) {
+  if (!onConnectionChange) {
+    return undefined
+  }
+
+  return (state: WsConnectionState) => {
+    if (state === 'connected') {
+      onConnectionChange(true)
+    } else if (state === 'disconnected') {
+      onConnectionChange(false)
+    }
+  }
 }
 
 function toPct(value: string): number {
@@ -88,11 +102,14 @@ export function createBybitFeed(): MarketFeed {
       }))
     },
 
-    subscribeQuotes(onQuote, onRtt) {
+    subscribeQuotes(onQuote, onRtt, onConnectionChange) {
       return openJsonWebSocket(WS, {
+        idleTimeoutMs: BYBIT_WS.idleMs,
+        onStateChange: mapConnectionChange(onConnectionChange),
         onRtt,
         heartbeat: {
-          intervalMs: 15_000,
+          intervalMs: BYBIT_WS.heartbeatIntervalMs,
+          pongTimeoutMs: BYBIT_WS.pongTimeoutMs,
           ping(socket) {
             socket.send(JSON.stringify({ op: 'ping' }))
           },
@@ -141,8 +158,10 @@ export function createBybitFeed(): MarketFeed {
       })
     },
 
-    subscribeCandles(instrumentId, onCandle) {
+    subscribeCandles(instrumentId, onCandle, onConnectionChange) {
       return openJsonWebSocket(WS, {
+        idleTimeoutMs: BYBIT_WS.idleMs,
+        onStateChange: mapConnectionChange(onConnectionChange),
         onOpen(socket) {
           socket.send(JSON.stringify({ op: 'subscribe', args: [`kline.60.${instrumentId}`] }))
         },

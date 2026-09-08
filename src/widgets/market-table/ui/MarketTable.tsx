@@ -32,6 +32,7 @@ export function MarketTable() {
                 return (
                   <tr
                     key={instrument.id}
+                    data-testid={`pair-${instrument.id}`}
                     data-selected={selected || undefined}
                     tabIndex={0}
                     aria-selected={selected}

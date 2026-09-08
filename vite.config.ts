@@ -2,7 +2,7 @@ import { copyFileSync, existsSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 function githubPagesBase(): string {
   if (process.env.GITHUB_PAGES !== 'true') {
@@ -39,5 +39,9 @@ export default defineConfig({
       '@entities': fileURLToPath(new URL('./src/entities', import.meta.url)),
       '@shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
     },
+  },
+  test: {
+    environment: 'happy-dom',
+    include: ['src/**/*.test.ts'],
   },
 })
