@@ -10,3 +10,4 @@ export {
 } from './market'
 export { routes } from './routes'
 export { MARKET_WATCHLISTS, type WatchlistItem } from './watchlists'
+export { BINANCE_WS_IDLE, BYBIT_WS } from './websocket'

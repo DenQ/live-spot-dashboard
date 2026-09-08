@@ -12,6 +12,14 @@ export type MarketFeed = {
   readonly instruments: Instrument[]
   fetchQuotes: () => Promise<Quote[]>
   fetchCandles: (instrumentId: string) => Promise<Candle[]>
-  subscribeQuotes: (onQuote: (quote: Quote) => void, onRtt?: (ms: number) => void) => Unsubscribe
-  subscribeCandles: (instrumentId: string, onCandle: (candle: Candle) => void) => Unsubscribe
+  subscribeQuotes: (
+    onQuote: (quote: Quote) => void,
+    onRtt?: (ms: number) => void,
+    onConnectionChange?: (connected: boolean) => void,
+  ) => Unsubscribe
+  subscribeCandles: (
+    instrumentId: string,
+    onCandle: (candle: Candle) => void,
+    onConnectionChange?: (connected: boolean) => void,
+  ) => Unsubscribe
 }

@@ -67,6 +67,7 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let cancelled = false
     let unsubscribe: Unsubscribe = () => undefined
+    let wasConnected = false
 
     const flushRtt = (sample: number) => {
       rttHold.current = blendRtt(rttHold.current, sample)
@@ -80,6 +81,41 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
       setQuoteRttMs((current) => (current === next ? current : next))
     }
 
+    const handleConnectionChange = (connected: boolean) => {
+      if (cancelled) {
+        return
+      }
+
+      if (!connected) {
+        setQuoteStatus('connecting')
+        return
+      }
+
+      if (!wasConnected) {
+        wasConnected = true
+        return
+      }
+
+      void (async () => {
+        try {
+          const snapshot = await feed.fetchQuotes()
+          if (cancelled) {
+            return
+          }
+
+          replaceQuotes(indexQuotes(snapshot))
+          setQuoteStatus('live')
+          setQuoteError(null)
+        } catch (cause) {
+          if (!cancelled) {
+            setQuoteStatus('error')
+            setQuoteError(toErrorMessage(cause))
+            setQuoteRttMs(null)
+          }
+        }
+      })()
+    }
+
     const run = async () => {
       try {
         const snapshot = await feed.fetchQuotes()
@@ -90,7 +126,7 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
         replaceQuotes(indexQuotes(snapshot))
         setQuoteStatus('live')
         setQuoteError(null)
-        unsubscribe = feed.subscribeQuotes(applyQuote, flushRtt)
+        unsubscribe = feed.subscribeQuotes(applyQuote, flushRtt, handleConnectionChange)
       } catch (cause) {
         if (!cancelled) {
           resetQuotes()
@@ -116,6 +152,41 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
 
     let cancelled = false
     let unsubscribe: Unsubscribe = () => undefined
+    let wasConnected = false
+
+    const handleConnectionChange = (connected: boolean) => {
+      if (cancelled) {
+        return
+      }
+
+      if (!connected) {
+        setCandleStatus('connecting')
+        return
+      }
+
+      if (!wasConnected) {
+        wasConnected = true
+        return
+      }
+
+      void (async () => {
+        try {
+          const history = await feed.fetchCandles(symbol)
+          if (cancelled) {
+            return
+          }
+
+          replaceCandles(history)
+          setCandleStatus('live')
+          setCandleError(null)
+        } catch (cause) {
+          if (!cancelled) {
+            setCandleStatus('error')
+            setCandleError(toErrorMessage(cause))
+          }
+        }
+      })()
+    }
 
     const run = async () => {
       try {
@@ -127,7 +198,7 @@ export function MarketFeedProvider({ children }: { children: ReactNode }) {
         replaceCandles(history)
         setCandleStatus('live')
         setCandleError(null)
-        unsubscribe = feed.subscribeCandles(symbol, applyLiveCandle)
+        unsubscribe = feed.subscribeCandles(symbol, applyLiveCandle, handleConnectionChange)
       } catch (cause) {
         if (!cancelled) {
           resetCandles()

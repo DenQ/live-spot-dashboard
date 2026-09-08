@@ -1,8 +1,8 @@
 import type { Candle } from '@entities/candle'
 import type { Quote } from '@entities/quote'
 import { requestJson } from '@shared/api/request'
-import { openJsonWebSocket } from '@shared/api/websocket'
-import { MARKET_WATCHLISTS } from '@shared/config'
+import { openJsonWebSocket, type WsConnectionState } from '@shared/api/websocket'
+import { MARKET_WATCHLISTS, BINANCE_WS_IDLE } from '@shared/config'
 import { isRecord } from '@shared/lib'
 
 import type { MarketFeed } from './port'
@@ -88,6 +88,20 @@ function isMiniTicker(value: unknown): value is StreamFrame<MiniTickerEvent> {
   return typeof value.data.s === 'string' && typeof value.data.c === 'string'
 }
 
+function mapConnectionChange(onConnectionChange?: (connected: boolean) => void) {
+  if (!onConnectionChange) {
+    return undefined
+  }
+
+  return (state: WsConnectionState) => {
+    if (state === 'connected') {
+      onConnectionChange(true)
+    } else if (state === 'disconnected') {
+      onConnectionChange(false)
+    }
+  }
+}
+
 function isKline(value: unknown): value is StreamFrame<KlineEvent> {
   if (!isRecord(value) || !isRecord(value.data) || !isRecord(value.data.k)) {
     return false
@@ -114,11 +128,13 @@ export function createBinanceFeed(): MarketFeed {
       return payload.map((row) => toCandle(instrumentId, row))
     },
 
-    subscribeQuotes(onQuote, onRtt) {
+    subscribeQuotes(onQuote, onRtt, onConnectionChange) {
       const streams = INSTRUMENTS.map((item) => `${item.id.toLowerCase()}@miniTicker`).join('/')
       let lastRttAt = 0
 
       return openJsonWebSocket(`${WS}?streams=${streams}`, {
+        idleTimeoutMs: BINANCE_WS_IDLE.quotesMs,
+        onStateChange: mapConnectionChange(onConnectionChange),
         onMessage(payload) {
           if (!isMiniTicker(payload)) {
             return
@@ -144,9 +160,11 @@ export function createBinanceFeed(): MarketFeed {
       })
     },
 
-    subscribeCandles(instrumentId, onCandle) {
+    subscribeCandles(instrumentId, onCandle, onConnectionChange) {
       const stream = `${instrumentId.toLowerCase()}@kline_1h`
       return openJsonWebSocket(`${WS}?streams=${stream}`, {
+        idleTimeoutMs: BINANCE_WS_IDLE.candlesMs,
+        onStateChange: mapConnectionChange(onConnectionChange),
         onMessage(payload) {
           if (!isKline(payload)) {
             return
