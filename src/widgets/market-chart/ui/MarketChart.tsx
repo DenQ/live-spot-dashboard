@@ -8,11 +8,11 @@ import {
   ColorType,
   HistogramSeries,
   createChart,
-  type IChartApi,
   type ISeriesApi,
   type UTCTimestamp,
 } from 'lightweight-charts'
 
+import { bindChartViewport, type ChartViewportBinder } from '../model/viewport-binder'
 import styles from './MarketChart.module.css'
 
 function token(name: string, fallback: string): string {
@@ -40,9 +40,9 @@ function toVolumePoint(item: Candle) {
 export function MarketChart() {
   const { symbol, instruments, candleStatus, candleError, providerId } = useMarketFeed()
   const hostRef = useRef<HTMLDivElement>(null)
-  const chartRef = useRef<IChartApi | null>(null)
   const candleRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null)
+  const viewportRef = useRef<ChartViewportBinder | null>(null)
 
   const instrument = instruments.find((item) => item.id === symbol)
   const hint = instrument ? `${instrument.ticker} · 1h` : '—'
@@ -98,11 +98,12 @@ export function MarketChart() {
       1,
     )
 
-    chartRef.current = chart
+    viewportRef.current = bindChartViewport(chart, host)
 
     return () => {
+      viewportRef.current?.destroy()
+      viewportRef.current = null
       chart.remove()
-      chartRef.current = null
       candleRef.current = null
       volumeRef.current = null
     }
@@ -116,10 +117,17 @@ export function MarketChart() {
       return
     }
 
+    const viewport = viewportRef.current
+
     if (candleStatus === 'connecting') {
       if (getCandles().length === 0) {
-        candleSeries.setData([])
-        volumeSeries.setData([])
+        viewport?.replaceSeriesData(
+          () => {
+            candleSeries.setData([])
+            volumeSeries.setData([])
+          },
+          { restore: false },
+        )
       }
       return
     }
@@ -129,12 +137,10 @@ export function MarketChart() {
     }
 
     const history = getCandles()
-    candleSeries.setData(history.map(toCandlePoint))
-    volumeSeries.setData(history.map(toVolumePoint))
-
-    if (history.length > 0) {
-      chartRef.current?.timeScale().fitContent()
-    }
+    viewport?.replaceSeriesData(() => {
+      candleSeries.setData(history.map(toCandlePoint))
+      volumeSeries.setData(history.map(toVolumePoint))
+    })
 
     return subscribeLiveCandle((candle) => {
       candleSeries.update(toCandlePoint(candle))

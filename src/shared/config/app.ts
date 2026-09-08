@@ -3,4 +3,5 @@ export const APP_KICKER = 'Spot'
 export const APP_STORAGE_KEYS = {
   provider: 'markets.provider',
   paper: 'markets.paper',
+  chartViewport: 'markets.chart.viewport',
 } as const
