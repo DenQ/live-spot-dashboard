@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import type { Instrument } from '@entities/instrument'
 import type { Quote } from '@entities/quote'
@@ -8,14 +8,19 @@ import type { MarketProviderId } from '@shared/config'
 import { getLiveQuotes } from './quotes-store'
 import { useMarketFeed } from './use-market-feed'
 
+export type SparkBar = {
+  time: number
+  close: number
+}
+
 const SPARKLINE_LIMIT = 24
 const LIVE_LAST_MS = 1000
 const SNAPSHOT_MS = 20_000
 
-const cache = new Map<MarketProviderId, Record<string, number[]>>()
-const inflight = new Map<MarketProviderId, Promise<Record<string, number[]>>>()
+const cache = new Map<MarketProviderId, Record<string, SparkBar[]>>()
+const inflight = new Map<MarketProviderId, Promise<Record<string, SparkBar[]>>>()
 
-function sameSeries(left: number[] | undefined, right: number[]) {
+function sameBars(left: SparkBar[] | undefined, right: SparkBar[]) {
   if (left === right) {
     return true
   }
@@ -25,7 +30,7 @@ function sameSeries(left: number[] | undefined, right: number[]) {
   }
 
   for (let index = 0; index < left.length; index += 1) {
-    if (left[index] !== right[index]) {
+    if (left[index].time !== right[index].time || left[index].close !== right[index].close) {
       return false
     }
   }
@@ -35,24 +40,25 @@ function sameSeries(left: number[] | undefined, right: number[]) {
 
 /** Replace the forming close with `quote.last` without allocating when nothing moved. */
 export function overlaySparklineLast(
-  snapshot: Record<string, number[]>,
+  snapshot: Record<string, SparkBar[]>,
   quotes: Record<string, Quote>,
-  prev: Record<string, number[]>,
+  prev: Record<string, SparkBar[]>,
 ) {
   const ids = Object.keys(snapshot)
   let changed = ids.length !== Object.keys(prev).length
-  const next: Record<string, number[]> = {}
+  const next: Record<string, SparkBar[]> = {}
 
   for (const id of ids) {
     const values = snapshot[id]
     const last = quotes[id]?.last
     const live = typeof last === 'number' && Number.isFinite(last) ? last : undefined
+    const tail = values[values.length - 1]
     const series =
-      values.length === 0 || live === undefined || values[values.length - 1] === live
+      values.length === 0 || live === undefined || tail.close === live
         ? values
-        : values.slice(0, -1).concat(live)
+        : values.slice(0, -1).concat({ time: tail.time, close: live })
 
-    if (sameSeries(prev[id], series)) {
+    if (sameBars(prev[id], series)) {
       next[id] = prev[id]
     } else {
       next[id] = series
@@ -61,6 +67,16 @@ export function overlaySparklineLast(
   }
 
   return changed ? next : prev
+}
+
+export function sparkClosesById(barsById: Record<string, SparkBar[]>) {
+  const next: Record<string, number[]> = {}
+
+  for (const [id, bars] of Object.entries(barsById)) {
+    next[id] = bars.map((bar) => bar.close)
+  }
+
+  return next
 }
 
 function loadSparklines(
@@ -85,18 +101,21 @@ function loadSparklines(
     instruments.map(async (instrument) => {
       try {
         const candles = await feed.fetchCandles(instrument.id, { limit: SPARKLINE_LIMIT })
-        return [instrument.id, candles.map((candle) => candle.close)] as const
+        return [
+          instrument.id,
+          candles.map((candle) => ({ time: candle.time, close: candle.close })),
+        ] as const
       } catch {
-        return [instrument.id, [] as number[]] as const
+        return [instrument.id, [] as SparkBar[]] as const
       }
     }),
   ).then((entries) => {
     const previous = cache.get(providerId) ?? {}
     const next = { ...previous }
 
-    for (const [id, closes] of entries) {
-      if (closes.length > 0) {
-        next[id] = closes
+    for (const [id, bars] of entries) {
+      if (bars.length > 0) {
+        next[id] = bars
       } else if (!(id in next)) {
         next[id] = []
       }
@@ -111,9 +130,9 @@ function loadSparklines(
   return request
 }
 
-export function useSparklines() {
+export function useSparkSeries() {
   const { providerId, instruments } = useMarketFeed()
-  const [closesById, setClosesById] = useState<Record<string, number[]>>(() => {
+  const [barsById, setBarsById] = useState<Record<string, SparkBar[]>>(() => {
     const cached = cache.get(providerId)
     return cached ? overlaySparklineLast(cached, getLiveQuotes(), {}) : {}
   })
@@ -127,14 +146,14 @@ export function useSparklines() {
         return
       }
 
-      setClosesById((prev) => overlaySparklineLast(snapshot, getLiveQuotes(), prev))
+      setBarsById((prev) => overlaySparklineLast(snapshot, getLiveQuotes(), prev))
     }
 
     const cached = cache.get(providerId)
     if (cached) {
       paint()
     } else {
-      setClosesById({})
+      setBarsById({})
     }
 
     const run = (force: boolean) => {
@@ -163,5 +182,11 @@ export function useSparklines() {
     }
   }, [instruments, providerId])
 
-  return closesById
+  const closesById = useMemo(() => sparkClosesById(barsById), [barsById])
+
+  return { barsById, closesById }
+}
+
+export function useSparklines() {
+  return useSparkSeries().closesById
 }

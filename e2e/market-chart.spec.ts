@@ -34,6 +34,18 @@ test.describe('market chart pair selection', () => {
       await expectChartReady(page, 'ETHUSDT')
     })
 
+    test(`${path}: switches the chart from the compare legend`, async ({ page }) => {
+      await openApp(page, path)
+      await expectChartReady(page, 'BTCUSDT')
+
+      await page.getByTestId('pair-compare-open').click()
+      await expect(page.getByTestId('pair-compare-float')).toBeVisible()
+      await page.getByTestId('pair-compare-ETHUSDT').click()
+      await expect(page.getByTestId('pair-ETHUSDT')).toHaveAttribute('aria-selected', 'true')
+      await expect(page.getByTestId('pair-compare-ETHUSDT')).toHaveAttribute('aria-pressed', 'true')
+      await expectChartReady(page, 'ETHUSDT')
+    })
+
     test(`${path}: keeps the chart when selecting another pair and clicking it again`, async ({ page }) => {
       await openApp(page, path)
       await expectChartReady(page, 'BTCUSDT')
