@@ -1,7 +1,9 @@
+import { HintsToggle } from '@features/coach'
 import { ProviderSwitch, useMarketFeed } from '@features/market-feed'
 import { ModeNav } from '@features/paper-trading'
 import { AppHeader, PageShell } from '@shared/ui'
 import { MarketChart } from '@widgets/market-chart'
+import { MarketPairStrip } from '@widgets/market-pair-strip'
 import { MarketTable } from '@widgets/market-table'
 
 import styles from './DashboardPage.module.css'
@@ -23,11 +25,17 @@ export function DashboardPage() {
     <PageShell>
       <AppHeader
         nav={<ModeNav />}
-        action={<ProviderSwitch />}
+        action={
+          <>
+            <HintsToggle />
+            <ProviderSwitch />
+          </>
+        }
         liveTone={liveTone}
         liveLabel={liveLabel}
         liveDetail={formatLiveDetail(quoteStatus, quoteRttMs)}
       />
+      <MarketPairStrip />
       <div className={styles.layout}>
         <MarketChart />
         <MarketTable />

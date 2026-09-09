@@ -180,3 +180,11 @@
   outline: 1px solid var(--accent-2);
   outline-offset: 2px;
 }
+
+.buy[data-hint="on"] {
+  box-shadow: 0 0 0 1px var(--up), 0 0 18px rgba(61, 240, 255, 0.28);
+}
+
+.sell[data-hint="on"] {
+  box-shadow: 0 0 0 1px var(--down), 0 0 18px rgba(255, 46, 230, 0.3);
+}

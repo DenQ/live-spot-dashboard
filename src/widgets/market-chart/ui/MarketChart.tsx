@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 import type { Candle } from '@entities/candle'
+import { useCoach } from '@features/coach'
 import { getCandles, subscribeLiveCandle, useMarketFeed } from '@features/market-feed'
 import { Panel } from '@shared/ui'
 import {
@@ -8,7 +9,11 @@ import {
   ColorType,
   HistogramSeries,
   createChart,
+  createSeriesMarkers,
   type ISeriesApi,
+  type ISeriesMarkersPluginApi,
+  type SeriesMarker,
+  type Time,
   type UTCTimestamp,
 } from 'lightweight-charts'
 
@@ -39,9 +44,11 @@ function toVolumePoint(item: Candle) {
 
 export function MarketChart() {
   const { symbol, instruments, candleStatus, candleError, providerId } = useMarketFeed()
+  const { hintsEnabled, advice } = useCoach()
   const hostRef = useRef<HTMLDivElement>(null)
   const candleRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null)
+  const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null)
   const viewportRef = useRef<ChartViewportBinder | null>(null)
 
   const instrument = instruments.find((item) => item.id === symbol)
@@ -81,7 +88,7 @@ export function MarketChart() {
       },
     })
 
-    candleRef.current = chart.addSeries(CandlestickSeries, {
+    const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: up,
       downColor: down,
       borderUpColor: up,
@@ -89,6 +96,7 @@ export function MarketChart() {
       wickUpColor: up,
       wickDownColor: down,
     })
+    candleRef.current = candleSeries
 
     volumeRef.current = chart.addSeries(
       HistogramSeries,
@@ -98,11 +106,15 @@ export function MarketChart() {
       1,
     )
 
+    markersRef.current = createSeriesMarkers(candleSeries, [])
+
     viewportRef.current = bindChartViewport(chart, host)
 
     return () => {
       viewportRef.current?.destroy()
       viewportRef.current = null
+      markersRef.current?.detach()
+      markersRef.current = null
       chart.remove()
       candleRef.current = null
       volumeRef.current = null
@@ -147,6 +159,37 @@ export function MarketChart() {
       volumeSeries.update(toVolumePoint(candle))
     })
   }, [candleStatus, providerId, symbol])
+
+  useEffect(() => {
+    const markers = markersRef.current
+
+    if (!markers) {
+      return
+    }
+
+    if (!hintsEnabled || !advice || advice.action === 'wait') {
+      markers.setMarkers([])
+      return
+    }
+
+    const last = getCandles().at(-1)
+
+    if (!last) {
+      markers.setMarkers([])
+      return
+    }
+
+    const buy = advice.action === 'buy'
+    const marker: SeriesMarker<UTCTimestamp> = {
+      time: last.time as UTCTimestamp,
+      position: buy ? 'belowBar' : 'aboveBar',
+      shape: buy ? 'arrowUp' : 'arrowDown',
+      color: buy ? token('--up', '#3df0ff') : token('--down', '#ff2ee6'),
+      text: buy ? 'BUY' : 'SELL',
+    }
+
+    markers.setMarkers([marker])
+  }, [advice, candleStatus, hintsEnabled, providerId, symbol])
 
   return (
     <Panel title="Chart" hint={hint}>

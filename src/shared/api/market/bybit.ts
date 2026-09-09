@@ -82,9 +82,10 @@ export function createBybitFeed(): MarketFeed {
       return rows
     },
 
-    async fetchCandles(instrumentId) {
+    async fetchCandles(instrumentId, options) {
+      const limit = options?.limit ?? 168
       const payload = await requestJson<BybitListResponse<string[]>>(
-        `${REST}/v5/market/kline?category=spot&symbol=${instrumentId}&interval=60&limit=168`,
+        `${REST}/v5/market/kline?category=spot&symbol=${instrumentId}&interval=60&limit=${limit}`,
       )
 
       if (payload.retCode !== 0) {

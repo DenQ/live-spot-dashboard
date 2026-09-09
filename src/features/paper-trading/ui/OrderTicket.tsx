@@ -15,10 +15,25 @@ export function OrderTicket() {
   const seeded = ticketPrefill?.instrumentId === symbol
   const ticketKey = `${symbol}:${seeded ? ticketPrefill.generation : 0}`
 
-  return <OrderTicketFields key={ticketKey} initialQty={seeded ? ticketPrefill.qty : '0.01'} />
+  return (
+    <OrderTicketFields
+      key={ticketKey}
+      initialQty={seeded ? ticketPrefill.qty : '0.01'}
+      initialLimit={seeded ? ticketPrefill.limit : undefined}
+      hintedSide={seeded ? ticketPrefill.side : undefined}
+    />
+  )
 }
 
-function OrderTicketFields({ initialQty }: { initialQty: string }) {
+function OrderTicketFields({
+  initialQty,
+  initialLimit,
+  hintedSide,
+}: {
+  initialQty: string
+  initialLimit?: string
+  hintedSide?: PaperSide
+}) {
   const { instruments, symbol, quoteStatus } = useMarketFeed()
   const quotesById = useQuotes()
   const { submit, freeQty, account } = usePaperTrading()
@@ -26,7 +41,7 @@ function OrderTicketFields({ initialQty }: { initialQty: string }) {
   const last = quotesById[symbol]?.last
   const position = account.positions[symbol]
   const [qty, setQty] = useState(initialQty)
-  const [limitDraft, setLimitDraft] = useState<string | null>(null)
+  const [limitDraft, setLimitDraft] = useState<string | null>(initialLimit ?? null)
   const [error, setError] = useState<string | null>(null)
   const autoLimit = limitDraft === null
   const limit = autoLimit ? (Number.isFinite(last) ? String(last) : '') : limitDraft
@@ -125,10 +140,22 @@ function OrderTicketFields({ initialQty }: { initialQty: string }) {
           Notional {formatUsd(notional)} · Fee {formatUsd(fee)} · Cash {formatUsd(account.cash)}
         </p>
         <div className={styles.actions}>
-          <button type="button" className={styles.buy} disabled={!live} onClick={() => place('buy')}>
+          <button
+            type="button"
+            className={styles.buy}
+            data-hint={hintedSide === 'buy' ? 'on' : undefined}
+            disabled={!live}
+            onClick={() => place('buy')}
+          >
             Buy
           </button>
-          <button type="button" className={styles.sell} disabled={!live || sellable <= 0} onClick={() => place('sell')}>
+          <button
+            type="button"
+            className={styles.sell}
+            data-hint={hintedSide === 'sell' ? 'on' : undefined}
+            disabled={!live || sellable <= 0}
+            onClick={() => place('sell')}
+          >
             Sell
             {sellPreview !== null ? (
               <span className={cx(styles.actionHint, sellPreview >= 0 ? styles.gain : styles.loss)}>

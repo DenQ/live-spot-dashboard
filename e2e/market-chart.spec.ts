@@ -24,6 +24,16 @@ test.describe('market chart pair selection', () => {
       await expectChartReady(page, 'BTCUSDT')
     })
 
+    test(`${path}: switches the chart from a pair chip`, async ({ page }) => {
+      await openApp(page, path)
+      await expectChartReady(page, 'BTCUSDT')
+
+      await page.getByTestId('pair-chip-ETHUSDT').click()
+      await expect(page.getByTestId('pair-ETHUSDT')).toHaveAttribute('aria-selected', 'true')
+      await expect(page.getByTestId('pair-chip-ETHUSDT')).toHaveAttribute('aria-pressed', 'true')
+      await expectChartReady(page, 'ETHUSDT')
+    })
+
     test(`${path}: keeps the chart when selecting another pair and clicking it again`, async ({ page }) => {
       await openApp(page, path)
       await expectChartReady(page, 'BTCUSDT')

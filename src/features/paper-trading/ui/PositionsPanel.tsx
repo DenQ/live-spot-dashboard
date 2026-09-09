@@ -1,3 +1,6 @@
+import { toRowHint } from '@features/coach/model/row-hint'
+import { useCoach } from '@features/coach/model/use-coach'
+import { HintBadge } from '@features/coach/ui/HintBadge'
 import { useMarketFeed, useQuotes } from '@features/market-feed'
 import { formatPct, formatPrice, formatQty, formatUsd } from '@shared/lib'
 import { Panel } from '@shared/ui'
@@ -9,6 +12,7 @@ export function PositionsPanel() {
   const { instruments, setSymbol } = useMarketFeed()
   const quotesById = useQuotes()
   const { account, freeQty, prefillTicket } = usePaperTrading()
+  const { hintsEnabled, adviceById } = useCoach()
   const rows = Object.values(account.positions)
 
   const selectPosition = (instrumentId: string) => {
@@ -32,6 +36,8 @@ export function PositionsPanel() {
                 <th>Avg</th>
                 <th>Last</th>
                 <th>uPnL</th>
+                {hintsEnabled ? <th>Hint</th> : null}
+                {hintsEnabled ? <th>Want</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -43,6 +49,7 @@ export function PositionsPanel() {
                 const pnl = value - cost
                 const pnlPct = cost === 0 ? 0 : (pnl / cost) * 100
                 const up = pnl >= 0
+                const hint = hintsEnabled ? toRowHint(adviceById[position.instrumentId], true) : null
 
                 return (
                   <tr
@@ -66,6 +73,20 @@ export function PositionsPanel() {
                     <td className={styles.num} data-side={up ? 'up' : 'down'}>
                       {Number.isFinite(pnl) ? `${formatUsd(pnl)} ${formatPct(pnlPct)}` : '—'}
                     </td>
+                    {hintsEnabled ? (
+                      <td
+                        className={styles.hint}
+                        data-testid={`position-hint-${position.instrumentId}`}
+                        title={adviceById[position.instrumentId]?.reasons.join(' · ')}
+                      >
+                        {hint ? <HintBadge hint={hint} /> : <span className={styles.pending}>—</span>}
+                      </td>
+                    ) : null}
+                    {hintsEnabled ? (
+                      <td className={styles.want} data-testid={`position-want-${position.instrumentId}`}>
+                        {hint?.want !== null && hint?.want !== undefined ? `${Math.round(hint.want * 100)}%` : '—'}
+                      </td>
+                    ) : null}
                   </tr>
                 )
               })}

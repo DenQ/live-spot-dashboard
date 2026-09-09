@@ -72,13 +72,18 @@ export function PaperTradingProvider({ children }: { children: ReactNode }) {
     setAccount(createAccount())
   }, [])
 
-  const prefillTicket = useCallback((instrumentId: string, qty: number) => {
-    setTicketPrefill((current) => ({
-      generation: (current?.generation ?? 0) + 1,
-      instrumentId,
-      qty: toQtyInput(qty),
-    }))
-  }, [])
+  const prefillTicket = useCallback(
+    (instrumentId: string, qty: number, extras?: { limit?: number; side?: PaperSide }) => {
+      setTicketPrefill((current) => ({
+        generation: (current?.generation ?? 0) + 1,
+        instrumentId,
+        qty: toQtyInput(qty),
+        limit: extras?.limit !== undefined && Number.isFinite(extras.limit) ? String(extras.limit) : undefined,
+        side: extras?.side,
+      }))
+    },
+    [],
+  )
 
   useEffect(() => {
     const pending = openOrders(account).filter((order) => order.status === 'pending')

@@ -1,3 +1,4 @@
+import { CoachProvider } from '@features/coach'
 import { MarketFeedProvider } from '@features/market-feed'
 import { PaperTradingProvider } from '@features/paper-trading'
 
@@ -7,7 +8,9 @@ export function App() {
   return (
     <MarketFeedProvider>
       <PaperTradingProvider>
-        <AppRouter />
+        <CoachProvider>
+          <AppRouter />
+        </CoachProvider>
       </PaperTradingProvider>
     </MarketFeedProvider>
   )
