@@ -4,4 +4,5 @@ export const APP_STORAGE_KEYS = {
   provider: 'markets.provider',
   paper: 'markets.paper',
   chartViewport: 'markets.chart.viewport',
+  coachHints: 'markets.coach.hints',
 } as const

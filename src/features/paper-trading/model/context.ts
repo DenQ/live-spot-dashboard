@@ -6,6 +6,8 @@ export type TicketPrefill = {
   generation: number
   instrumentId: string
   qty: string
+  limit?: string
+  side?: PaperSide
 }
 
 export type PaperTradingContextValue = {
@@ -19,7 +21,11 @@ export type PaperTradingContextValue = {
   freeQty: (instrumentId: string) => number
   openOrders: PaperOrder[]
   ticketPrefill: TicketPrefill | null
-  prefillTicket: (instrumentId: string, qty: number) => void
+  prefillTicket: (
+    instrumentId: string,
+    qty: number,
+    extras?: { limit?: number; side?: PaperSide },
+  ) => void
 }
 
 export const PaperTradingContext = createContext<PaperTradingContextValue | null>(null)

@@ -1,4 +1,8 @@
+import { toRowHint } from '@features/coach/model/row-hint'
+import { useCoach } from '@features/coach/model/use-coach'
+import { HintBadge } from '@features/coach/ui/HintBadge'
 import { useMarketFeed, useQuotes } from '@features/market-feed'
+import { usePaperTrading } from '@features/paper-trading/model/use-paper-trading'
 import { formatPct, formatPrice, formatVolume } from '@shared/lib'
 import { Panel } from '@shared/ui'
 
@@ -7,6 +11,8 @@ import styles from './MarketTable.module.css'
 export function MarketTable() {
   const { instruments, symbol, setSymbol, quoteStatus, quoteError } = useMarketFeed()
   const quotesById = useQuotes()
+  const { hintsEnabled, adviceById } = useCoach()
+  const { account } = usePaperTrading()
 
   return (
     <Panel title="Pairs" hint="Select to chart">
@@ -21,6 +27,7 @@ export function MarketTable() {
                 <th>Last</th>
                 <th>Change</th>
                 <th>Volume</th>
+                {hintsEnabled ? <th>Hint</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -28,6 +35,8 @@ export function MarketTable() {
                 const quote = quotesById[instrument.id]
                 const selected = instrument.id === symbol
                 const up = (quote?.changePct ?? 0) >= 0
+                const held = (account.positions[instrument.id]?.qty ?? 0) > 0
+                const hint = hintsEnabled ? toRowHint(adviceById[instrument.id], held) : null
 
                 return (
                   <tr
@@ -53,6 +62,19 @@ export function MarketTable() {
                       {quote ? formatPct(quote.changePct) : '—'}
                     </td>
                     <td className={styles.num}>{quote ? formatVolume(quote.volume) : '—'}</td>
+                    {hintsEnabled ? (
+                      <td
+                        className={styles.hint}
+                        data-testid={`pair-hint-${instrument.id}`}
+                        title={adviceById[instrument.id]?.reasons.join(' · ')}
+                      >
+                        {hint ? (
+                          <HintBadge hint={hint} />
+                        ) : (
+                          <span className={styles.pending}>—</span>
+                        )}
+                      </td>
+                    ) : null}
                   </tr>
                 )
               })}

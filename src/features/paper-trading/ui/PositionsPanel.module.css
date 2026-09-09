@@ -67,3 +67,21 @@
 .num[data-side="down"] {
   color: var(--down);
 }
+
+.hint {
+  width: 4.5rem;
+}
+
+.want {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.pending {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-faint);
+}

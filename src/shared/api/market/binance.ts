@@ -121,9 +121,11 @@ export function createBinanceFeed(): MarketFeed {
       return payload.map(toQuote)
     },
 
-    async fetchCandles(instrumentId) {
+    async fetchCandles(instrumentId, options) {
+      const limit = options?.limit ?? 168
+      const interval = options?.interval ?? '1h'
       const payload = await requestJson<BinanceKline[]>(
-        `${REST}/klines?symbol=${instrumentId}&interval=1h&limit=168`,
+        `${REST}/klines?symbol=${instrumentId}&interval=${interval}&limit=${limit}`,
       )
       return payload.map((row) => toCandle(instrumentId, row))
     },

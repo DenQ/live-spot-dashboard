@@ -1,2 +1,2 @@
 export { createMarketFeed } from './create-market-feed'
-export type { MarketFeed, Unsubscribe } from './port'
+export type { CandleInterval, FetchCandlesOptions, MarketFeed, Unsubscribe } from './port'

@@ -7,11 +7,18 @@ import type { Unsubscribe } from '../websocket'
 
 export type { Unsubscribe }
 
+export type CandleInterval = '1h' | '1m'
+
+export type FetchCandlesOptions = {
+  limit?: number
+  interval?: CandleInterval
+}
+
 export type MarketFeed = {
   readonly id: MarketProviderId
   readonly instruments: Instrument[]
   fetchQuotes: () => Promise<Quote[]>
-  fetchCandles: (instrumentId: string) => Promise<Candle[]>
+  fetchCandles: (instrumentId: string, options?: FetchCandlesOptions) => Promise<Candle[]>
   subscribeQuotes: (
     onQuote: (quote: Quote) => void,
     onRtt?: (ms: number) => void,

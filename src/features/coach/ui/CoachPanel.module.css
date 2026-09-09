@@ -1,0 +1,87 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 22px 20px;
+}
+
+.action {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.action[data-action="buy"] {
+  color: var(--up);
+}
+
+.action[data-action="sell"] {
+  color: var(--down);
+}
+
+.action[data-action="wait"] {
+  color: var(--text-muted);
+}
+
+.confidence {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--text-faint);
+}
+
+.limit,
+.empty,
+.note,
+.error {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.error {
+  color: var(--danger);
+}
+
+.reasons {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.apply {
+  align-self: flex-start;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.apply:hover {
+  background: var(--accent-dim);
+  color: var(--text-primary);
+}
+
+.apply:focus-visible {
+  outline: 1px solid var(--accent-2);
+  outline-offset: 2px;
+}
