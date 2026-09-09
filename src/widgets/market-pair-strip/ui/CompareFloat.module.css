@@ -39,11 +39,39 @@
   color: var(--text-muted);
 }
 
-.hint {
-  margin: 0;
+.tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.tab {
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
   font-family: var(--font-mono);
   font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-faint);
+}
+
+.tab:hover {
+  color: var(--text-primary);
+}
+
+.tab[aria-selected="true"] {
+  background: var(--accent-dim);
+  color: var(--accent-2);
+}
+
+.tab:focus-visible {
+  outline: 1px solid var(--accent-2);
+  outline-offset: 1px;
 }
 
 .close {

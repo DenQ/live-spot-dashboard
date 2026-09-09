@@ -46,6 +46,18 @@ test.describe('market chart pair selection', () => {
       await expectChartReady(page, 'ETHUSDT')
     })
 
+    test(`${path}: compare 1m tab keeps legend pair switching`, async ({ page }) => {
+      await openApp(page, path)
+      await expectChartReady(page, 'BTCUSDT')
+
+      await page.getByTestId('pair-compare-open').click()
+      await page.getByTestId('pair-compare-tab-1m').click()
+      await expect(page.getByTestId('pair-compare-tab-1m')).toHaveAttribute('aria-selected', 'true')
+      await page.getByTestId('pair-compare-ETHUSDT').click()
+      await expect(page.getByTestId('pair-ETHUSDT')).toHaveAttribute('aria-selected', 'true')
+      await expectChartReady(page, 'ETHUSDT')
+    })
+
     test(`${path}: keeps the chart when selecting another pair and clicking it again`, async ({ page }) => {
       await openApp(page, path)
       await expectChartReady(page, 'BTCUSDT')

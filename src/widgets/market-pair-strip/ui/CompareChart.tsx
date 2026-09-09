@@ -18,13 +18,14 @@ type CompareChartProps = {
   instruments: readonly Instrument[]
   barsById: Record<string, SparkBar[]>
   symbol: string
+  rangeKey: string
 }
 
 function token(name: string, fallback: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
 }
 
-export function CompareChart({ instruments, barsById, symbol }: CompareChartProps) {
+export function CompareChart({ instruments, barsById, symbol, rangeKey }: CompareChartProps) {
   const hostRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map())
@@ -95,6 +96,10 @@ export function CompareChart({ instruments, barsById, symbol }: CompareChartProp
   }, [instruments])
 
   useEffect(() => {
+    fittedRef.current = false
+  }, [rangeKey])
+
+  useEffect(() => {
     let hasData = false
 
     for (const instrument of instruments) {
@@ -110,7 +115,7 @@ export function CompareChart({ instruments, barsById, symbol }: CompareChartProp
       chartRef.current?.timeScale().fitContent()
       fittedRef.current = true
     }
-  }, [barsById, instruments])
+  }, [barsById, instruments, rangeKey])
 
   useEffect(() => {
     for (const instrument of instruments) {

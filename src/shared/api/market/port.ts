@@ -7,8 +7,11 @@ import type { Unsubscribe } from '../websocket'
 
 export type { Unsubscribe }
 
+export type CandleInterval = '1h' | '1m'
+
 export type FetchCandlesOptions = {
   limit?: number
+  interval?: CandleInterval
 }
 
 export type MarketFeed = {

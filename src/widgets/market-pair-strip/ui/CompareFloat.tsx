@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 
 import type { Instrument } from '@entities/instrument'
-import type { SparkBar } from '@features/market-feed'
+import { useSparkSeries, type SparkBar, type SparkInterval } from '@features/market-feed'
 import { cx, formatPct } from '@shared/lib'
 
 import { pairColor } from '../model/pair-color'
@@ -18,10 +18,17 @@ type CompareFloatProps = {
 }
 
 const PANEL_WIDTH = 720
+const TABS: { id: SparkInterval; label: string }[] = [
+  { id: '1h', label: '1h' },
+  { id: '1m', label: '1m' },
+]
 
 export function CompareFloat({ instruments, barsById, symbol, onSelect, onClose }: CompareFloatProps) {
   const panelRef = useRef<HTMLElement>(null)
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
+  const [range, setRange] = useState<SparkInterval>('1h')
+  const minute = useSparkSeries('1m', range === '1m')
+  const series = range === '1m' ? minute.barsById : barsById
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -82,16 +89,30 @@ export function CompareFloat({ instruments, barsById, symbol, onSelect, onClose 
         <h2 id="pair-compare-title" className={styles.title}>
           Compare
         </h2>
-        <p className={styles.hint}>1h %</p>
+        <div className={styles.tabs} role="tablist" aria-label="Compare interval">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              className={styles.tab}
+              data-testid={`pair-compare-tab-${tab.id}`}
+              aria-selected={range === tab.id}
+              onClick={() => setRange(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
         <button type="button" className={styles.close} onClick={onClose} data-testid="pair-compare-close">
           Close
         </button>
       </header>
-      <CompareChart instruments={instruments} barsById={barsById} symbol={symbol} />
+      <CompareChart instruments={instruments} barsById={series} symbol={symbol} rangeKey={range} />
       <div className={styles.legend}>
         {instruments.map((instrument) => {
           const selected = instrument.id === symbol
-          const pct = lastPercent(barsById[instrument.id] ?? [])
+          const pct = lastPercent(series[instrument.id] ?? [])
           const up = (pct ?? 0) >= 0
 
           return (

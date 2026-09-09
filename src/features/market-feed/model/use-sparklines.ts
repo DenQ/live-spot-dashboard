@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import type { Instrument } from '@entities/instrument'
 import type { Quote } from '@entities/quote'
-import { createMarketFeed } from '@shared/api'
+import { createMarketFeed, type CandleInterval } from '@shared/api'
 import type { MarketProviderId } from '@shared/config'
 
 import { getLiveQuotes } from './quotes-store'
@@ -13,12 +13,20 @@ export type SparkBar = {
   close: number
 }
 
-const SPARKLINE_LIMIT = 24
-const LIVE_LAST_MS = 1000
-const SNAPSHOT_MS = 20_000
+export type SparkInterval = CandleInterval
 
-const cache = new Map<MarketProviderId, Record<string, SparkBar[]>>()
-const inflight = new Map<MarketProviderId, Promise<Record<string, SparkBar[]>>>()
+const LIVE_LAST_MS = 1000
+const SPARK_LIMIT: Record<SparkInterval, number> = { '1h': 24, '1m': 60 }
+const SNAPSHOT_MS: Record<SparkInterval, number> = { '1h': 20_000, '1m': 10_000 }
+
+type CacheKey = `${MarketProviderId}:${SparkInterval}`
+
+const cache = new Map<CacheKey, Record<string, SparkBar[]>>()
+const inflight = new Map<CacheKey, Promise<Record<string, SparkBar[]>>>()
+
+function toCacheKey(providerId: MarketProviderId, interval: SparkInterval): CacheKey {
+  return `${providerId}:${interval}`
+}
 
 function sameBars(left: SparkBar[] | undefined, right: SparkBar[]) {
   if (left === right) {
@@ -82,16 +90,19 @@ export function sparkClosesById(barsById: Record<string, SparkBar[]>) {
 function loadSparklines(
   providerId: MarketProviderId,
   instruments: readonly Instrument[],
+  interval: SparkInterval,
   force = false,
 ) {
+  const key = toCacheKey(providerId, interval)
+
   if (!force) {
-    const cached = cache.get(providerId)
+    const cached = cache.get(key)
     if (cached) {
       return Promise.resolve(cached)
     }
   }
 
-  const pending = inflight.get(providerId)
+  const pending = inflight.get(key)
   if (pending) {
     return pending
   }
@@ -100,7 +111,10 @@ function loadSparklines(
   const request = Promise.all(
     instruments.map(async (instrument) => {
       try {
-        const candles = await feed.fetchCandles(instrument.id, { limit: SPARKLINE_LIMIT })
+        const candles = await feed.fetchCandles(instrument.id, {
+          limit: SPARK_LIMIT[interval],
+          interval,
+        })
         return [
           instrument.id,
           candles.map((candle) => ({ time: candle.time, close: candle.close })),
@@ -110,7 +124,7 @@ function loadSparklines(
       }
     }),
   ).then((entries) => {
-    const previous = cache.get(providerId) ?? {}
+    const previous = cache.get(key) ?? {}
     const next = { ...previous }
 
     for (const [id, bars] of entries) {
@@ -121,53 +135,64 @@ function loadSparklines(
       }
     }
 
-    cache.set(providerId, next)
-    inflight.delete(providerId)
+    cache.set(key, next)
+    inflight.delete(key)
     return next
   })
 
-  inflight.set(providerId, request)
+  inflight.set(key, request)
   return request
 }
 
-export function useSparkSeries() {
+const EMPTY_BARS: Record<string, SparkBar[]> = {}
+
+export function useSparkSeries(interval: SparkInterval = '1h', enabled = true) {
   const { providerId, instruments } = useMarketFeed()
-  const [barsById, setBarsById] = useState<Record<string, SparkBar[]>>(() => {
-    const cached = cache.get(providerId)
-    return cached ? overlaySparklineLast(cached, getLiveQuotes(), {}) : {}
-  })
+  const key = toCacheKey(providerId, interval)
+  const [held, setHeld] = useState<{ key: CacheKey; bars: Record<string, SparkBar[]> } | null>(null)
 
   useEffect(() => {
+    if (!enabled) {
+      return
+    }
+
     let cancelled = false
+    const cacheKey = toCacheKey(providerId, interval)
 
     const paint = () => {
-      const snapshot = cache.get(providerId)
-      if (!snapshot) {
+      const snapshot = cache.get(cacheKey)
+      if (!snapshot || cancelled) {
         return
       }
 
-      setBarsById((prev) => overlaySparklineLast(snapshot, getLiveQuotes(), prev))
-    }
+      setHeld((prev) => {
+        const nextBars = overlaySparklineLast(
+          snapshot,
+          getLiveQuotes(),
+          prev?.key === cacheKey ? prev.bars : {},
+        )
 
-    const cached = cache.get(providerId)
-    if (cached) {
-      paint()
-    } else {
-      setBarsById({})
+        if (prev?.key === cacheKey && nextBars === prev.bars) {
+          return prev
+        }
+
+        return { key: cacheKey, bars: nextBars }
+      })
     }
 
     const run = (force: boolean) => {
-      void loadSparklines(providerId, instruments, force).then(() => {
+      void loadSparklines(providerId, instruments, interval, force).then(() => {
         if (!cancelled) {
           paint()
         }
       })
     }
 
+    const cached = cache.get(cacheKey)
     const idleId = window.requestIdleCallback?.(() => run(Boolean(cached)), { timeout: 1500 })
     const timer = idleId === undefined ? window.setTimeout(() => run(Boolean(cached)), 0) : undefined
     const liveId = window.setInterval(paint, LIVE_LAST_MS)
-    const refreshId = window.setInterval(() => run(true), SNAPSHOT_MS)
+    const refreshId = window.setInterval(() => run(true), SNAPSHOT_MS[interval])
 
     return () => {
       cancelled = true
@@ -180,8 +205,9 @@ export function useSparkSeries() {
       window.clearInterval(liveId)
       window.clearInterval(refreshId)
     }
-  }, [instruments, providerId])
+  }, [enabled, instruments, interval, providerId])
 
+  const barsById = enabled && held?.key === key ? held.bars : EMPTY_BARS
   const closesById = useMemo(() => sparkClosesById(barsById), [barsById])
 
   return { barsById, closesById }
