@@ -17,6 +17,6 @@
   margin: 0;
   font-family: var(--font-mono);
   font-size: 13px;
-  background: rgba(7, 1, 15, 0.88);
+  background: var(--bg-overlay);
   color: var(--text-muted);
 }

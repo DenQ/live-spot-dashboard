@@ -8,6 +8,7 @@ import {
   OrderTicket,
   PositionsPanel,
 } from '@features/paper-trading'
+import { ThemeToggle } from '@features/theme'
 import { AppHeader, PageShell } from '@shared/ui'
 import { MarketChart } from '@widgets/market-chart'
 import { MarketPairStrip } from '@widgets/market-pair-strip'
@@ -36,6 +37,7 @@ export function TrainerPage() {
         nav={<ModeNav />}
         action={
           <>
+            <ThemeToggle />
             <HintsToggle />
             <ProviderSwitch />
           </>

@@ -24,9 +24,9 @@
   justify-content: space-between;
   gap: 12px;
   padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--line-soft);
   border-radius: 10px;
-  background: rgba(8, 0, 16, 0.35);
+  background: var(--bg-inset-soft);
 }
 
 .title {

@@ -3,8 +3,8 @@
   padding: 4px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(8, 0, 16, 0.65);
-  box-shadow: inset 0 0 0 1px rgba(61, 240, 255, 0.08), 0 0 24px rgba(255, 46, 230, 0.12);
+  background: var(--bg-inset);
+  box-shadow: var(--shadow-control);
 }
 
 .tab {
@@ -38,8 +38,8 @@
 }
 
 .selected {
-  background: linear-gradient(180deg, rgba(61, 240, 255, 0.16), rgba(255, 46, 230, 0.18));
-  box-shadow: 0 0 18px rgba(255, 46, 230, 0.25);
+  background: var(--fill-selected);
+  box-shadow: var(--shadow-selected);
 }
 
 .label {

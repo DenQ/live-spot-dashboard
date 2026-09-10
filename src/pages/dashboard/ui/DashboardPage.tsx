@@ -1,6 +1,7 @@
 import { HintsToggle } from '@features/coach'
 import { ProviderSwitch, useMarketFeed } from '@features/market-feed'
 import { ModeNav } from '@features/paper-trading'
+import { ThemeToggle } from '@features/theme'
 import { AppHeader, PageShell } from '@shared/ui'
 import { MarketChart } from '@widgets/market-chart'
 import { MarketPairStrip } from '@widgets/market-pair-strip'
@@ -27,6 +28,7 @@ export function DashboardPage() {
         nav={<ModeNav />}
         action={
           <>
+            <ThemeToggle />
             <HintsToggle />
             <ProviderSwitch />
           </>

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 
 import type { Instrument } from '@entities/instrument'
 import type { SparkBar } from '@features/market-feed'
+import { readChartPalette, useDocumentTheme } from '@shared/lib'
 import {
   ColorType,
   LineSeries,
@@ -21,11 +22,8 @@ type CompareChartProps = {
   rangeKey: string
 }
 
-function token(name: string, fallback: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
-}
-
 export function CompareChart({ instruments, barsById, symbol, rangeKey }: CompareChartProps) {
+  const theme = useDocumentTheme()
   const hostRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
   const seriesRef = useRef<Map<string, ISeriesApi<'Line'>>>(new Map())
@@ -38,32 +36,30 @@ export function CompareChart({ instruments, barsById, symbol, rangeKey }: Compar
       return
     }
 
-    const muted = token('--text-muted', '#b197c4')
-    const up = token('--up', '#3df0ff')
-    const down = token('--down', '#ff2ee6')
+    const palette = readChartPalette()
 
     const chart = createChart(host, {
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: muted,
+        textColor: palette.text,
         fontFamily: 'IBM Plex Sans, sans-serif',
       },
       grid: {
-        vertLines: { color: 'rgba(255, 46, 230, 0.08)' },
-        horzLines: { color: 'rgba(61, 240, 255, 0.06)' },
+        vertLines: { color: palette.gridVert },
+        horzLines: { color: palette.gridHorz },
       },
       rightPriceScale: {
-        borderColor: 'rgba(255, 46, 230, 0.22)',
+        borderColor: palette.borderY,
       },
       timeScale: {
-        borderColor: 'rgba(61, 240, 255, 0.22)',
+        borderColor: palette.borderX,
         timeVisible: true,
         secondsVisible: false,
       },
       crosshair: {
-        vertLine: { color: up, labelBackgroundColor: down },
-        horzLine: { color: down, labelBackgroundColor: up },
+        vertLine: { color: palette.up, labelBackgroundColor: palette.down },
+        horzLine: { color: palette.down, labelBackgroundColor: palette.up },
       },
       localization: {
         priceFormatter: (value: number) => `${value.toFixed(1)}%`,
@@ -93,7 +89,7 @@ export function CompareChart({ instruments, barsById, symbol, rangeKey }: Compar
       chartRef.current = null
       seriesRef.current = new Map()
     }
-  }, [instruments])
+  }, [instruments, theme])
 
   useEffect(() => {
     fittedRef.current = false
@@ -115,7 +111,7 @@ export function CompareChart({ instruments, barsById, symbol, rangeKey }: Compar
       chartRef.current?.timeScale().fitContent()
       fittedRef.current = true
     }
-  }, [barsById, instruments, rangeKey])
+  }, [barsById, instruments, rangeKey, theme])
 
   useEffect(() => {
     for (const instrument of instruments) {
@@ -125,7 +121,7 @@ export function CompareChart({ instruments, barsById, symbol, rangeKey }: Compar
         color: pairColor(instrument.id),
       })
     }
-  }, [instruments, symbol])
+  }, [instruments, symbol, theme])
 
   return <div ref={hostRef} className={styles.chart} data-testid="pair-compare-chart" />
 }

@@ -22,7 +22,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(180deg, rgba(255, 46, 230, 0.08), transparent 42%),
+    linear-gradient(180deg, var(--wash-accent), transparent 42%),
     var(--bg-panel);
   box-shadow: var(--shadow-panel);
   color: var(--text-primary);
@@ -32,7 +32,7 @@
 
 .chip:hover {
   background:
-    linear-gradient(180deg, rgba(61, 240, 255, 0.1), transparent 42%),
+    linear-gradient(180deg, var(--wash-accent-2), transparent 42%),
     var(--bg-panel);
 }
 
@@ -42,9 +42,9 @@
 }
 
 .chip[data-selected] {
-  border-color: rgba(255, 46, 230, 0.55);
+  border-color: var(--line-accent);
   background:
-    linear-gradient(90deg, rgba(255, 46, 230, 0.16), transparent 78%),
+    linear-gradient(90deg, var(--wash-accent-strong), transparent 78%),
     var(--bg-panel);
 }
 
@@ -109,7 +109,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(180deg, rgba(61, 240, 255, 0.1), transparent 42%),
+    linear-gradient(180deg, var(--wash-accent-2), transparent 42%),
     var(--bg-panel);
   box-shadow: var(--shadow-panel);
   color: var(--text-primary);
@@ -123,7 +123,7 @@
 
 .compare:hover {
   background:
-    linear-gradient(180deg, rgba(61, 240, 255, 0.16), transparent 42%),
+    linear-gradient(180deg, var(--wash-accent-2-strong), transparent 42%),
     var(--bg-panel);
 }
 
@@ -133,7 +133,7 @@
 }
 
 .compare[aria-expanded="true"] {
-  border-color: rgba(61, 240, 255, 0.55);
+  border-color: var(--line-accent-2);
 }
 
 @media (max-width: 960px) {

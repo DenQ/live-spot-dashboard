@@ -5,4 +5,5 @@ export const APP_STORAGE_KEYS = {
   paper: 'markets.paper',
   chartViewport: 'markets.chart.viewport',
   coachHints: 'markets.coach.hints',
+  theme: 'markets.theme',
 } as const

@@ -21,7 +21,7 @@
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: rgba(8, 0, 16, 0.55);
+  background: var(--bg-inset);
   color: var(--text-primary);
   font-size: 16px;
   letter-spacing: 0;
@@ -146,7 +146,7 @@
 }
 
 .gain {
-  color: #fff;
+  color: var(--text-on-down);
 }
 
 .loss {
@@ -154,13 +154,15 @@
 }
 
 .buy {
-  background: rgba(61, 240, 255, 0.18);
-  box-shadow: 0 0 18px rgba(61, 240, 255, 0.16);
+  background: var(--fill-up);
+  box-shadow: var(--shadow-buy);
+  color: var(--text-on-up);
 }
 
 .sell {
-  background: rgba(255, 46, 230, 0.2);
-  box-shadow: 0 0 18px rgba(255, 46, 230, 0.18);
+  background: var(--fill-down);
+  box-shadow: var(--shadow-sell);
+  color: var(--text-on-down);
 }
 
 .buy:hover,
@@ -182,9 +184,9 @@
 }
 
 .buy[data-hint="on"] {
-  box-shadow: 0 0 0 1px var(--up), 0 0 18px rgba(61, 240, 255, 0.28);
+  box-shadow: var(--shadow-buy-hint);
 }
 
 .sell[data-hint="on"] {
-  box-shadow: 0 0 0 1px var(--down), 0 0 18px rgba(255, 46, 230, 0.3);
+  box-shadow: var(--shadow-sell-hint);
 }

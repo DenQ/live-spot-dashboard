@@ -4,7 +4,7 @@
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background:
-    linear-gradient(180deg, rgba(255, 46, 230, 0.08), transparent 32%),
+    linear-gradient(180deg, var(--wash-accent), transparent 32%),
     var(--bg-panel);
   box-shadow: var(--shadow-panel);
   backdrop-filter: blur(18px);
