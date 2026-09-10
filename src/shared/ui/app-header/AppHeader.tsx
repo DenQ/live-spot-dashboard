@@ -13,6 +13,7 @@ type AppHeaderProps = {
   liveLabel?: string
   liveTone?: LiveTone
   nav?: ReactNode
+  status?: ReactNode
   title?: string
 }
 
@@ -23,6 +24,7 @@ export function AppHeader({
   liveLabel = 'Idle',
   liveTone = 'pending',
   nav,
+  status,
   title = APP_NAME,
 }: AppHeaderProps) {
   return (
@@ -38,10 +40,13 @@ export function AppHeader({
         {nav}
         {action}
         <div className={styles.meta}>
-          <span className={styles.live} data-tone={liveTone}>
-            {liveLabel}
-          </span>
-          <span className={styles.liveDetail}>{liveDetail}</span>
+          {status}
+          <div className={styles.liveRow}>
+            <span className={styles.live} data-tone={liveTone}>
+              {liveLabel}
+            </span>
+            <span className={styles.liveDetail}>{liveDetail}</span>
+          </div>
         </div>
       </div>
     </header>

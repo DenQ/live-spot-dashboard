@@ -8,9 +8,7 @@
   position: absolute;
   inset: -24% 8% auto;
   height: 48vh;
-  background:
-    radial-gradient(closest-side, rgba(255, 46, 230, 0.22), transparent 70%),
-    radial-gradient(closest-side at 80% 40%, rgba(61, 240, 255, 0.16), transparent 68%);
+  background: var(--page-glow);
   pointer-events: none;
 }
 
@@ -18,8 +16,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255, 46, 230, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(61, 240, 255, 0.05) 1px, transparent 1px);
+    linear-gradient(var(--page-grid-y) 1px, transparent 1px),
+    linear-gradient(90deg, var(--page-grid-x) 1px, transparent 1px);
   background-size: 56px 56px;
   mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 72%);
   pointer-events: none;

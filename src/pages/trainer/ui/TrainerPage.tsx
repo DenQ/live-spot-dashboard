@@ -8,6 +8,7 @@ import {
   OrderTicket,
   PositionsPanel,
 } from '@features/paper-trading'
+import { ThemeToggle } from '@features/theme'
 import { AppHeader, PageShell } from '@shared/ui'
 import { MarketChart } from '@widgets/market-chart'
 import { MarketPairStrip } from '@widgets/market-pair-strip'
@@ -40,6 +41,7 @@ export function TrainerPage() {
             <ProviderSwitch />
           </>
         }
+        status={<ThemeToggle />}
         liveTone={liveTone}
         liveLabel={liveLabel}
         liveDetail={formatLiveDetail(quoteStatus, quoteRttMs)}

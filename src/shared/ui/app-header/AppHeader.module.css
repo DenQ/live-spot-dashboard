@@ -17,7 +17,7 @@
   height: 42px;
   border-radius: 999px;
   background: linear-gradient(180deg, var(--accent-2), var(--accent));
-  box-shadow: 0 0 24px rgba(255, 46, 230, 0.55), 0 0 18px rgba(61, 240, 255, 0.35);
+  box-shadow: var(--shadow-mark);
 }
 
 .kicker {
@@ -48,9 +48,18 @@
 .meta {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
   flex-shrink: 0;
   gap: 6px;
+  width: fit-content;
+}
+
+.liveRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  width: max-content;
   font-family: var(--font-mono);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -61,7 +70,6 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-width: 12ch;
 }
 
 .live::before {
@@ -70,23 +78,22 @@
   height: 7px;
   border-radius: 50%;
   background: var(--warn);
-  box-shadow: 0 0 0 4px rgba(255, 225, 77, 0.16);
+  box-shadow: var(--shadow-live-pending);
 }
 
 .live[data-tone="live"]::before {
   background: var(--accent-2);
-  box-shadow: 0 0 0 4px rgba(61, 240, 255, 0.22);
+  box-shadow: var(--shadow-live);
 }
 
 .live[data-tone="error"]::before {
   background: var(--danger);
-  box-shadow: 0 0 0 4px rgba(255, 77, 109, 0.2);
+  box-shadow: var(--shadow-live-error);
 }
 
 .liveDetail {
   min-width: 6ch;
-  color: var(--text-faint);
-  text-align: right;
+  color: var(--text-muted);
 }
 
 @media (max-width: 720px) {

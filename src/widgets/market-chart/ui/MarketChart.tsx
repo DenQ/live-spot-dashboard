@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react'
 import type { Candle } from '@entities/candle'
 import { useCoach } from '@features/coach'
 import { getCandles, subscribeLiveCandle, useMarketFeed } from '@features/market-feed'
+import { readChartPalette, useDocumentTheme, type ChartPalette } from '@shared/lib'
 import { Panel } from '@shared/ui'
 import {
   CandlestickSeries,
@@ -20,10 +21,6 @@ import {
 import { bindChartViewport, type ChartViewportBinder } from '../model/viewport-binder'
 import styles from './MarketChart.module.css'
 
-function token(name: string, fallback: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
-}
-
 function toCandlePoint(item: Candle) {
   return {
     time: item.time as UTCTimestamp,
@@ -34,17 +31,18 @@ function toCandlePoint(item: Candle) {
   }
 }
 
-function toVolumePoint(item: Candle) {
+function toVolumePoint(item: Candle, palette: ChartPalette) {
   return {
     time: item.time as UTCTimestamp,
     value: item.volume,
-    color: item.close >= item.open ? 'rgba(61, 240, 255, 0.5)' : 'rgba(255, 46, 230, 0.5)',
+    color: item.close >= item.open ? palette.volumeUp : palette.volumeDown,
   }
 }
 
 export function MarketChart() {
   const { symbol, instruments, candleStatus, candleError, providerId } = useMarketFeed()
   const { hintsEnabled, advice } = useCoach()
+  const theme = useDocumentTheme()
   const hostRef = useRef<HTMLDivElement>(null)
   const candleRef = useRef<ISeriesApi<'Candlestick'> | null>(null)
   const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null)
@@ -61,40 +59,38 @@ export function MarketChart() {
       return
     }
 
-    const up = token('--up', '#3df0ff')
-    const down = token('--down', '#ff2ee6')
-    const muted = token('--text-muted', '#b197c4')
+    const palette = readChartPalette()
 
     const chart = createChart(host, {
       autoSize: true,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: muted,
+        textColor: palette.text,
         fontFamily: 'IBM Plex Sans, sans-serif',
       },
       grid: {
-        vertLines: { color: 'rgba(255, 46, 230, 0.08)' },
-        horzLines: { color: 'rgba(61, 240, 255, 0.06)' },
+        vertLines: { color: palette.gridVert },
+        horzLines: { color: palette.gridHorz },
       },
-      rightPriceScale: { borderColor: 'rgba(255, 46, 230, 0.22)' },
+      rightPriceScale: { borderColor: palette.borderY },
       timeScale: {
-        borderColor: 'rgba(61, 240, 255, 0.22)',
+        borderColor: palette.borderX,
         timeVisible: true,
         secondsVisible: false,
       },
       crosshair: {
-        vertLine: { color: up, labelBackgroundColor: down },
-        horzLine: { color: down, labelBackgroundColor: up },
+        vertLine: { color: palette.up, labelBackgroundColor: palette.down },
+        horzLine: { color: palette.down, labelBackgroundColor: palette.up },
       },
     })
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: up,
-      downColor: down,
-      borderUpColor: up,
-      borderDownColor: down,
-      wickUpColor: up,
-      wickDownColor: down,
+      upColor: palette.up,
+      downColor: palette.down,
+      borderUpColor: palette.up,
+      borderDownColor: palette.down,
+      wickUpColor: palette.up,
+      wickDownColor: palette.down,
     })
     candleRef.current = candleSeries
 
@@ -119,7 +115,7 @@ export function MarketChart() {
       candleRef.current = null
       volumeRef.current = null
     }
-  }, [providerId])
+  }, [providerId, theme])
 
   useEffect(() => {
     const candleSeries = candleRef.current
@@ -130,6 +126,7 @@ export function MarketChart() {
     }
 
     const viewport = viewportRef.current
+    const palette = readChartPalette()
 
     if (candleStatus === 'connecting') {
       if (getCandles().length === 0) {
@@ -151,14 +148,14 @@ export function MarketChart() {
     const history = getCandles()
     viewport?.replaceSeriesData(() => {
       candleSeries.setData(history.map(toCandlePoint))
-      volumeSeries.setData(history.map(toVolumePoint))
+      volumeSeries.setData(history.map((item) => toVolumePoint(item, palette)))
     })
 
     return subscribeLiveCandle((candle) => {
       candleSeries.update(toCandlePoint(candle))
-      volumeSeries.update(toVolumePoint(candle))
+      volumeSeries.update(toVolumePoint(candle, palette))
     })
-  }, [candleStatus, providerId, symbol])
+  }, [candleStatus, providerId, symbol, theme])
 
   useEffect(() => {
     const markers = markersRef.current
@@ -179,17 +176,18 @@ export function MarketChart() {
       return
     }
 
+    const palette = readChartPalette()
     const buy = advice.action === 'buy'
     const marker: SeriesMarker<UTCTimestamp> = {
       time: last.time as UTCTimestamp,
       position: buy ? 'belowBar' : 'aboveBar',
       shape: buy ? 'arrowUp' : 'arrowDown',
-      color: buy ? token('--up', '#3df0ff') : token('--down', '#ff2ee6'),
+      color: buy ? palette.up : palette.down,
       text: buy ? 'BUY' : 'SELL',
     }
 
     markers.setMarkers([marker])
-  }, [advice, candleStatus, hintsEnabled, providerId, symbol])
+  }, [advice, candleStatus, hintsEnabled, providerId, symbol, theme])
 
   return (
     <Panel title="Chart" hint={hint}>
