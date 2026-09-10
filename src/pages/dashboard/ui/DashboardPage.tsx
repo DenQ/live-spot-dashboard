@@ -28,11 +28,11 @@ export function DashboardPage() {
         nav={<ModeNav />}
         action={
           <>
-            <ThemeToggle />
             <HintsToggle />
             <ProviderSwitch />
           </>
         }
+        status={<ThemeToggle />}
         liveTone={liveTone}
         liveLabel={liveLabel}
         liveDetail={formatLiveDetail(quoteStatus, quoteRttMs)}

@@ -6,6 +6,7 @@ import { MARKET_WATCHLISTS, BINANCE_WS_IDLE } from '@shared/config'
 import { isRecord } from '@shared/lib'
 
 import type { MarketFeed } from './port'
+import { createTickerLagClock } from './ticker-lag'
 
 const REST = 'https://api.binance.com/api/v3'
 const WS = 'wss://stream.binance.com:9443/stream'
@@ -133,6 +134,7 @@ export function createBinanceFeed(): MarketFeed {
     subscribeQuotes(onQuote, onRtt, onConnectionChange) {
       const streams = INSTRUMENTS.map((item) => `${item.id.toLowerCase()}@miniTicker`).join('/')
       let lastRttAt = 0
+      const lagOf = createTickerLagClock()
 
       return openJsonWebSocket(`${WS}?streams=${streams}`, {
         idleTimeoutMs: BINANCE_WS_IDLE.quotesMs,
@@ -143,8 +145,8 @@ export function createBinanceFeed(): MarketFeed {
           }
 
           const now = Date.now()
-          const delay = now - payload.data.E
-          if (onRtt && delay >= 0 && delay < 30_000 && now - lastRttAt >= 1000) {
+          const delay = lagOf(payload.data.E, now)
+          if (onRtt && delay !== null && now - lastRttAt >= 1000) {
             lastRttAt = now
             onRtt(delay)
           }

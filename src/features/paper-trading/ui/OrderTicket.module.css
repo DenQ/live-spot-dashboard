@@ -167,7 +167,7 @@
 
 .buy:hover,
 .sell:hover {
-  filter: brightness(1.12);
+  filter: brightness(1.06);
 }
 
 .buy:disabled,
