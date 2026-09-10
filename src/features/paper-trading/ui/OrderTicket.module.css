@@ -143,14 +143,8 @@
   font-weight: 500;
   letter-spacing: 0.02em;
   text-transform: none;
-}
-
-.gain {
-  color: var(--text-on-down);
-}
-
-.loss {
-  color: var(--text-faint);
+  color: inherit;
+  white-space: nowrap;
 }
 
 .buy {

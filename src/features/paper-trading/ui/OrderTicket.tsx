@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import type { PaperSide } from '@entities/paper-account'
 import { useMarketFeed, useQuotes } from '@features/market-feed'
 import { PAPER } from '@shared/config'
-import { cx, formatPrice, formatQty, formatSignedCompactUsd, formatUsd } from '@shared/lib'
+import { formatPrice, formatQty, formatSignedCompactUsd, formatUsd } from '@shared/lib'
 import { Panel } from '@shared/ui'
 
 import { usePaperTrading } from '../model/use-paper-trading'
@@ -158,9 +158,7 @@ function OrderTicketFields({
           >
             Sell
             {sellPreview !== null ? (
-              <span className={cx(styles.actionHint, sellPreview >= 0 ? styles.gain : styles.loss)}>
-                {formatSignedCompactUsd(sellPreview)}
-              </span>
+              <span className={styles.actionHint}>{formatSignedCompactUsd(sellPreview)}</span>
             ) : null}
           </button>
         </div>
