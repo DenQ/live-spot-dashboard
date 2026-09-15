@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import type { PaperSide } from '@entities/paper-account'
 import { useMarketFeed, useQuotes } from '@features/market-feed'
 import { PAPER } from '@shared/config'
-import { formatPrice, formatQty, formatSignedCompactUsd, formatUsd } from '@shared/lib'
+import { cx, formatPrice, formatQty, formatSignedCompactUsd, formatUsd } from '@shared/lib'
 import { Panel } from '@shared/ui'
 
 import {
@@ -72,6 +72,7 @@ function OrderTicketFields({
   const modeHint = autoLimit
     ? 'Auto: follows last price. Click to set the limit yourself.'
     : 'Manual: your limit. Click to follow last price.'
+  const allHint = account.cash <= 0 ? 'No cash to spend' : 'Spend all cash, minus the fee'
 
   const hint = useMemo(() => {
     if (!instrument) {
@@ -163,8 +164,9 @@ function OrderTicketFields({
               />
               <button
                 type="button"
-                className={styles.all}
-                aria-label="Spend all cash"
+                className={cx(styles.all, styles.tip)}
+                title={allHint}
+                aria-label={allHint}
                 data-testid="ticket-amount-all"
                 disabled={account.cash <= 0}
                 onClick={fillMaxCash}
@@ -190,7 +192,7 @@ function OrderTicketFields({
             />
             <button
               type="button"
-              className={styles.mode}
+              className={cx(styles.mode, styles.tip)}
               data-mode={autoLimit ? 'auto' : 'manual'}
               title={modeHint}
               aria-label={modeHint}

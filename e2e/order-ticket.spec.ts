@@ -7,7 +7,9 @@ test('/trainer: ticket qty, limit, and amount stay in sync', async ({ page }) =>
 
   await expect(page.getByRole('heading', { name: 'Ticket' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'Auto: follows last price. Click to set the limit yourself.' }).click()
+  const limitMode = page.getByRole('button', { name: 'Auto: follows last price. Click to set the limit yourself.' })
+  await expect(limitMode).toHaveAttribute('title', 'Auto: follows last price. Click to set the limit yourself.')
+  await limitMode.click()
 
   const qty = page.getByTestId('ticket-qty')
   const amount = page.getByTestId('ticket-amount')
@@ -38,9 +40,12 @@ test('/trainer: All fills max cash and Buy is blocked when the bid is too large'
   const amount = page.getByTestId('ticket-amount')
   const limit = page.getByTestId('ticket-limit')
   const buy = page.getByTestId('ticket-buy')
+  const all = page.getByTestId('ticket-amount-all')
+
+  await expect(all).toHaveAttribute('title', 'Spend all cash, minus the fee')
 
   await limit.fill('40000')
-  await page.getByTestId('ticket-amount-all').click()
+  await all.click()
 
   const maxAmount = Number(await amount.inputValue())
   expect(maxAmount).toBeGreaterThan(990)
