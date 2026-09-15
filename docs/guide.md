@@ -53,7 +53,7 @@ Trainer starts you with **$1,000** cash. State is stored in the browser (`localS
 | Slippage | up to 12 bps |
 | Reset | **Reset $1,000** — clears cash, positions, and open orders |
 
-The ticket is a **limit** order (quantity + limit). Limit can follow last price or you can type it. Notional, fee, cash, and max sell are shown on the ticket.
+The ticket is a **limit** order. Enter quantity or amount (USD); the other follows from the limit. Limit can follow last price or you can type it. **All** fills the amount with spendable cash. Buy is disabled if the bid (plus fee) is more than cash.
 
 This is not instant. Price can move while the order is working.
 

@@ -22,7 +22,7 @@ A professional-looking trainer for rehearsing entries and exits on real prices. 
 - **Binance Spot** and **Bybit Spot** — public REST + WebSocket, no credentials
 - **Live status** with latency (RTT) when the socket is healthy
 - **Candlestick chart** and a watchlist (BTC, ETH, SOL, BNB, XRP, DOGE)
-- **Order ticket** — quantity, limit, notional, 0.10% fee, cash and max sell
+- **Order ticket** — quantity or amount (USD), limit, 0.10% fee, cash, max sell, and All cash
 - **Realistic matching** — delayed fills, slippage, and a chance the book misses you
 - **Account strip** — cash, equity, unrealized PnL, vs start, **Reset $1,000**
 - **Portfolio, open orders, ledger** — persisted in the browser

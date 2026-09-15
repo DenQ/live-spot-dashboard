@@ -3,9 +3,20 @@ import { useMemo, useState } from 'react'
 import type { PaperSide } from '@entities/paper-account'
 import { useMarketFeed, useQuotes } from '@features/market-feed'
 import { PAPER } from '@shared/config'
-import { formatPrice, formatQty, formatSignedCompactUsd, formatUsd } from '@shared/lib'
+import { cx, formatPrice, formatQty, formatSignedCompactUsd, formatUsd } from '@shared/lib'
 import { Panel } from '@shared/ui'
 
+import {
+  canAffordBuy,
+  deriveAmount,
+  formatTicketAmount,
+  formatTicketQty,
+  maxBuyNotional,
+  nextTicketFields,
+  qtyForMaxBuy,
+  type TicketFieldAction,
+  type TicketFields,
+} from '../model/ticket-fields'
 import { usePaperTrading } from '../model/use-paper-trading'
 import styles from './OrderTicket.module.css'
 
@@ -40,18 +51,20 @@ function OrderTicketFields({
   const instrument = instruments.find((item) => item.id === symbol)
   const last = quotesById[symbol]?.last
   const position = account.positions[symbol]
-  const [qty, setQty] = useState(initialQty)
+  const [draft, setDraft] = useState<TicketFields>({ qty: initialQty, amount: '', driver: 'qty' })
   const [limitDraft, setLimitDraft] = useState<string | null>(initialLimit ?? null)
   const [error, setError] = useState<string | null>(null)
   const autoLimit = limitDraft === null
   const limit = autoLimit ? (Number.isFinite(last) ? String(last) : '') : limitDraft
-
-  const qtyValue = Number(qty)
   const limitValue = Number(limit)
+  const fields = nextTicketFields(draft, { type: 'limit', limit: limitValue })
+  const qtyValue = Number(fields.qty)
   const notional = qtyValue > 0 && limitValue > 0 ? qtyValue * limitValue : 0
   const fee = notional * PAPER.takerFee
+  const total = notional + fee
   const sellable = freeQty(symbol)
   const live = quoteStatus === 'live' && Number.isFinite(last)
+  const affordable = canAffordBuy(qtyValue, limitValue, account.cash, PAPER.takerFee)
   const sellPreview =
     live && position && qtyValue > 0 && limitValue > 0 && qtyValue <= sellable + 1e-8
       ? qtyValue * limitValue * (1 - PAPER.takerFee) - qtyValue * position.avgPrice
@@ -59,6 +72,7 @@ function OrderTicketFields({
   const modeHint = autoLimit
     ? 'Auto: follows last price. Click to set the limit yourself.'
     : 'Manual: your limit. Click to follow last price.'
+  const allHint = account.cash <= 0 ? 'No cash to spend' : 'Spend all cash, minus the fee'
 
   const hint = useMemo(() => {
     if (!instrument) {
@@ -67,6 +81,34 @@ function OrderTicketFields({
 
     return `${instrument.ticker} · Fee ${(PAPER.takerFee * 100).toFixed(2)}% · delayed fill`
   }, [instrument])
+
+  const patchFields = (action: TicketFieldAction) => {
+    setDraft((current) => nextTicketFields(current, action))
+    setError(null)
+  }
+
+  const fillMaxSell = () => {
+    patchFields({ type: 'qty', value: String(sellable || 0.01), limit: limitValue })
+  }
+
+  const fillMaxCash = () => {
+    if (!(limitValue > 0)) {
+      patchFields({
+        type: 'amount',
+        value: formatTicketAmount(maxBuyNotional(account.cash, PAPER.takerFee)),
+        limit: limitValue,
+      })
+      return
+    }
+
+    const qty = qtyForMaxBuy(account.cash, limitValue, PAPER.takerFee)
+    const amount = deriveAmount(formatTicketQty(qty), limitValue)
+    if (!amount) {
+      return
+    }
+
+    patchFields({ type: 'amount', value: amount, limit: limitValue })
+  }
 
   const place = (side: PaperSide) => {
     if (!instrument) {
@@ -92,20 +134,48 @@ function OrderTicketFields({
           event.preventDefault()
         }}
       >
-        <label className={styles.field}>
-          <span>Quantity</span>
-          <input
-            inputMode="decimal"
-            value={qty}
-            onChange={(event) => {
-              setQty(event.target.value)
-              setError(null)
-            }}
-          />
-          <button type="button" className={styles.ghost} onClick={() => setQty(String(sellable || 0.01))}>
-            Max sell {formatQty(sellable)}
-          </button>
-        </label>
+        <div className={styles.row}>
+          <label className={styles.field}>
+            <span>Quantity</span>
+            <input
+              inputMode="decimal"
+              value={fields.qty}
+              aria-label="Quantity"
+              data-testid="ticket-qty"
+              onChange={(event) => {
+                patchFields({ type: 'qty', value: event.target.value, limit: limitValue })
+              }}
+            />
+            <button type="button" className={styles.ghost} onClick={fillMaxSell}>
+              Max sell {formatQty(sellable)}
+            </button>
+          </label>
+          <div className={styles.field}>
+            <span>Amount</span>
+            <div className={styles.control}>
+              <input
+                inputMode="decimal"
+                value={fields.amount}
+                aria-label="Amount USD"
+                data-testid="ticket-amount"
+                onChange={(event) => {
+                  patchFields({ type: 'amount', value: event.target.value, limit: limitValue })
+                }}
+              />
+              <button
+                type="button"
+                className={cx(styles.all, styles.tip)}
+                title={allHint}
+                aria-label={allHint}
+                data-testid="ticket-amount-all"
+                disabled={account.cash <= 0}
+                onClick={fillMaxCash}
+              >
+                All
+              </button>
+            </div>
+          </div>
+        </div>
         <div className={styles.field}>
           <span>Limit</span>
           <div className={styles.control}>
@@ -114,6 +184,7 @@ function OrderTicketFields({
               readOnly={autoLimit}
               value={limit}
               aria-label="Limit price"
+              data-testid="ticket-limit"
               onChange={(event) => {
                 setLimitDraft(event.target.value)
                 setError(null)
@@ -121,7 +192,7 @@ function OrderTicketFields({
             />
             <button
               type="button"
-              className={styles.mode}
+              className={cx(styles.mode, styles.tip)}
               data-mode={autoLimit ? 'auto' : 'manual'}
               title={modeHint}
               aria-label={modeHint}
@@ -137,14 +208,16 @@ function OrderTicketFields({
           <span className={styles.meta}>Last {Number.isFinite(last) ? formatPrice(last) : '—'}</span>
         </div>
         <p className={styles.notional}>
-          Notional {formatUsd(notional)} · Fee {formatUsd(fee)} · Cash {formatUsd(account.cash)}
+          Fee {formatUsd(fee)} · Cash {formatUsd(account.cash)} · Total {formatUsd(total)}
         </p>
         <div className={styles.actions}>
           <button
             type="button"
             className={styles.buy}
+            data-testid="ticket-buy"
             data-hint={hintedSide === 'buy' ? 'on' : undefined}
-            disabled={!live}
+            disabled={!live || !affordable}
+            title={!affordable ? 'Not enough cash for this bid' : undefined}
             onClick={() => place('buy')}
           >
             Buy

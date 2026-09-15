@@ -413,10 +413,10 @@ function createOrderId(now: number, rng: () => number): string {
   return `ord_${now.toString(36)}_${Math.floor(rng() * 1e9).toString(36)}`
 }
 
-function roundCash(value: number): number {
+export function roundCash(value: number): number {
   return Math.round(value * 100) / 100
 }
 
-function roundQty(value: number): number {
+export function roundQty(value: number): number {
   return Math.round(value * 1e8) / 1e8
 }
