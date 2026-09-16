@@ -1,14 +1,17 @@
 import { useEffect, useRef } from 'react'
 
 import type { Candle } from '@entities/candle'
+import { lastOpenBuy } from '@entities/paper-account'
 import { useCoach } from '@features/coach'
 import { getCandles, subscribeLiveCandle, useMarketFeed } from '@features/market-feed'
+import { usePaperTrading } from '@features/paper-trading'
 import { readChartPalette, useDocumentTheme, type ChartPalette } from '@shared/lib'
 import { Panel } from '@shared/ui'
 import {
   CandlestickSeries,
   ColorType,
   HistogramSeries,
+  LineStyle,
   createChart,
   createSeriesMarkers,
   type ISeriesApi,
@@ -18,6 +21,8 @@ import {
   type UTCTimestamp,
 } from 'lightweight-charts'
 
+import { snapFillToCandleTime } from '../model/buy-time'
+import { createBuyTimeLine } from '../model/buy-time-line'
 import { bindChartViewport, type ChartViewportBinder } from '../model/viewport-binder'
 import styles from './MarketChart.module.css'
 
@@ -41,6 +46,7 @@ function toVolumePoint(item: Candle, palette: ChartPalette) {
 
 export function MarketChart() {
   const { symbol, instruments, candleStatus, candleError, providerId } = useMarketFeed()
+  const { account } = usePaperTrading()
   const { hintsEnabled, advice } = useCoach()
   const theme = useDocumentTheme()
   const hostRef = useRef<HTMLDivElement>(null)
@@ -48,6 +54,9 @@ export function MarketChart() {
   const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null)
   const markersRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null)
   const viewportRef = useRef<ChartViewportBinder | null>(null)
+  const lastBuy = lastOpenBuy(account, symbol)
+  const lastBuyPrice = lastBuy?.price ?? null
+  const lastBuyAt = lastBuy?.at ?? null
 
   const instrument = instruments.find((item) => item.id === symbol)
   const hint = instrument ? `${instrument.ticker} · 1h` : '—'
@@ -188,6 +197,41 @@ export function MarketChart() {
 
     markers.setMarkers([marker])
   }, [advice, candleStatus, hintsEnabled, providerId, symbol, theme])
+
+  useEffect(() => {
+    const series = candleRef.current
+
+    if (!series || lastBuyPrice == null) {
+      return
+    }
+
+    const palette = readChartPalette()
+    const line = series.createPriceLine({
+      price: lastBuyPrice,
+      color: palette.lastBuy,
+      lineWidth: 1,
+      lineStyle: LineStyle.Dashed,
+      axisLabelVisible: true,
+      title: 'Buy',
+    })
+
+    const candleTime = lastBuyAt == null ? null : snapFillToCandleTime(getCandles(), lastBuyAt)
+    const marker = createBuyTimeLine({
+      time: candleTime == null ? null : (candleTime as UTCTimestamp),
+      price: lastBuyPrice,
+      color: palette.lastBuy,
+    })
+    series.attachPrimitive(marker)
+
+    return () => {
+      if (candleRef.current !== series) {
+        return
+      }
+
+      series.removePriceLine(line)
+      series.detachPrimitive(marker)
+    }
+  }, [candleStatus, lastBuyAt, lastBuyPrice, providerId, symbol, theme])
 
   return (
     <Panel title="Chart" hint={hint}>

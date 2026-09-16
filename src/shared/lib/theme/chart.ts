@@ -4,6 +4,7 @@ export type ChartPalette = {
   text: string
   up: string
   down: string
+  lastBuy: string
   gridVert: string
   gridHorz: string
   borderY: string
@@ -17,6 +18,7 @@ export function readChartPalette(): ChartPalette {
     text: cssVar('--text-muted'),
     up: cssVar('--up'),
     down: cssVar('--down'),
+    lastBuy: cssVar('--warn'),
     gridVert: cssVar('--chart-grid-vert'),
     gridHorz: cssVar('--chart-grid-horz'),
     borderY: cssVar('--chart-border-y'),
